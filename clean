@@ -1,0 +1,13 @@
+rm ig_data_cleaner.py~
+rm -r ig_data_cleaner_test
+rm ig_quast.py~
+rm -r ig_quast_results
+rm ig_repertoire_constructor.py~
+rm -r ig_repertoire_constructor_test
+rm ig_simulator.py~
+rm -r ig_simulator_test
+rm ig_tools_init.py~
+rm iterativeBH.py~
+rm makefile~
+rm prepare_ig_tools.py~
+rm prepare_ig_tools.log

@@ -1,0 +1,908 @@
+<html>
+<head>
+    <title>IgQUAST 1.0 Manual</title>
+    <style type="text/css">
+        .code {
+            background-color: lightgray;
+        }
+    </style>
+    <link rel="shortcut icon" href="pictures/ig_tools.ico">
+</head>
+
+  <style>
+
+  </style>
+
+<font size = "+2">
+
+<body>
+<h1>IgQUAST 1.0 manual</h1>
+
+1. <a href = "#about">What is IgQUAST?</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;1.1 <a href = "#ig_repertoire">What is antibody repertoire?</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;1.2 <a href = "#igquast_modes">IgQUAST modes</a><br>
+
+2. <a href = "#install">Installation</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;2.1 <a href = "#test_datasets">Verifying your installation</a></br>
+
+3. <a href = "#running">RunningIgQUAST</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;3.1 <a href = "#basic_options">Basic options</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;3.2 <a href = "#basic_output">Basic output</a></br>
+
+4. <a href = "#single_mode"><em>Single repertoire evaluation</em> mode</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;4.1 <a href = "#single_options"><em>Single repertoire evaluation</em> options</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;4.2 <a href = "#single_metrics"><em>Single repertoire evaluation</em> metrics</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;4.3 <a href = "#single_output"><em>Single repertoire evaluation</em> output</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;4.4 <a href = "#single_examples"><em>Single repertoire evaluation</em> examples</a></br>
+
+5. <a href = "#multiple_mode"><em>Multiple repertoires comparison</em> mode</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.1 <a href = "#multiple_options"><em>Multiple repertoires comparison</em> options</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.2 <a href = "#multiple_metrics"><em>Multiple repertoires comparison</em> metrics</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.3 <a href = "#multiple_output"><em>Multiple repertoires comparison</em> output</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.4 <a href = "#multiple_examples"><em>Multiple repertoires comparison</em> examples</a></br>
+
+5. <a href = "#ideal_mode"><em>Quality assessment against an ideal repertoire</em> mode</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.1 <a href = "#ideal_options"><em>Quality assessment against an ideal repertoire</em> options</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.2 <a href = "#ideal_metrics"><em>Quality assessment against an ideal repertoire</em> metrics</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.3 <a href = "#ideal_output"><em>Quality assessment against an ideal repertoire</em> output</a></br>
+&nbsp;&nbsp;&nbsp;&nbsp;5.4 <a href = "#ideal_examples"><em>Quality assessment against an ideal repertoire</em> examples</a></br>
+
+6. <a href = "#feedback">Feedback and bug reports</a></br>
+</br>
+
+<!---------------------------------------------------------->
+<a id = "about"></a>
+<h2>1. What is IgQUAST?</h2>
+IgQUAST (<b>I</b>mmuno<b>g</b>lobulin <b>QU</b>ality <b>AS</b>sessment <b>T</b>ool) is a tool for quality assessment of antibody repertoire. 
+IgQUAST takes antibody repertoire(s) as an input and evaluates them in the <a href = "#igquast_modes">three different ways</a>.
+
+<!----------------------------------------->
+<a id = "ig_repertoire"></a>
+<h3>1.1 What is antibody repertoire?</h3>
+Antibody repertoire is a set of clusters that correspond to antibody clones (groups of identical antibodies presenting by antibody nucleotide sequence, frequency and a set of Ig-Seq reads composing group).
+We use two files to describe antibody repertoire: CLUSTERS.FA (FASTA file containing antibody sequences) and RCM (Read-Cluster Map). 
+Examples of CLUSTERS.FA and RCM files for toy repertoire are listed below.</br>
+
+CLUSTERS.FASTA is a FASTA file, where each sequence corresponds to the antibody clone. Header of each sequence contains information about corresponding cluster id and size:
+<pre class = "code">
+    <code>
+    >cluster___1___size___3
+    CCCCTGCAATTAAAATTGTTGACCACCTACATACCAAAGACGAGCGCCTTTACGCTTGCCTTTAGTACCTCGCAACGGCTGCGGACG
+    >cluster___2___size___2
+    CCCCTGCAATTAAAATTGTTGACCACCTACATACCAAAGACGAGCGCCTTTACGCTTGCCTTTAGTACCTCGCAACGGCTGCGG
+    >cluster___3___size___1
+    CCCCTGCAATTAAAATTGTTGACCACCTACATACCAAAGACGAGCGCCTTTACGCTTGCCTTTAGTACCTCGCAACGGCTGCGGAC
+    </code>
+</pre> 
+
+Every line of RCM file contains information about read name and corresponding cluster id:
+<pre class = "code">
+    <code>
+    MISEQ@:53:000000000-A2BMW:1:2114:14345:28882    1
+    MISEQ@:53:000000000-A2BMW:1:2114:14374:28884    1
+    MISEQ@:53:000000000-A2BMW:1:2114:14393:28886    1
+    MISEQ@:53:000000000-A2BMW:1:2114:16454:28882    2
+    MISEQ@:53:000000000-A2BMW:1:2114:16426:28886    2
+    MISEQ@:53:000000000-A2BMW:1:2114:15812:28886    3
+    </code>
+</pre>
+
+<!----------------------------------------->
+<a id = "igquast_modes"></a>
+<h3>1.2 IgQUAST modes</h3>
+IgQUAST has three modes:
+<ul>
+    <li><a href = "#single_mode"><em>Single repertoire analisys</em></a> - analysis of single antibody repertoire including computation of basic metrics and advanced analysis of mutated groups.</li>
+    <li><a href = "#multiple_mode"><em>Multiple repertoires comparison</em></a> - comparison of several antibody repertoires constructed by the different methods and corresponding to the same Ig-Seq library.</li>
+    <li><a href = "#ideal_mode"><em>Quality assessment against an ideal repertoire</em></a> - analysis of antibody repertoire(s) using ideal (error-free) repertoire.</li>
+</ul>
+</br>
+
+<!---------------------------------------------------------->
+<a id = "install"></a>
+<h2>2. Installation</h2>
+
+IgQUAST requires the following pre-installed dependencies:
+<ul>
+	<li>64-bit Linux system</li>
+    <li>g++ (version 4.7 or higher)</li>
+	<li>Python (version 2.7 or higher)</li>
+	<li>Additional Python modules</li>
+    <ul>
+        <li>BioPython (<a href = "http://biopython.org/wiki/Download">download link</a>)</li>
+        <li>NumPy and SciPy (including PyLab) (<a href = "http://www.scipy.org/scipylib/download.html">download link</a>)</li>
+        <li>Matplotlib (<a href = "http://matplotlib.org/downloads.html">download link</a>)</li>
+    </ul>
+</ul>
+
+To install <code>IgQUAST</code>, type:
+<pre class = "code">
+    <code>
+    make
+    </code>
+</pre> 
+
+<!----------------------------------------->
+<a id = "test_datasets"></a>
+<h3>2.1. Verifying your installation</h3>
+To try <code>IgQUAST</code> on test data set, run:
+<pre class="code">
+<code>
+    ./ig_quast.py --test
+</code>
+</pre>
+
+If the installation is successful, you will find the following information in the log:
+
+<pre class="code">
+    <code>
+    ======== IgQUAST ends
+
+    Main output files:
+    Computed metrics in TXT were written to &lt;igtools_installation_directory>/ig_quast_results/YYYY-MM-DD_HH-MM-SS/metrics.txt
+    Computed metrics in CSV were written to &lt;igtools_installation_directory>/ig_quast_results/YYYY-MM-DD_HH-MM-SS/metrics.csv
+
+    Thank you for using IgQUAST!
+
+    Log was written to &lt;igquast_installation_directory>/ig_quast_results/YYYY-MM-DD_HH-MM-SS/ig_quast.log
+    </code>
+</pre>
+where <code>YYYY-MM-DD_HH-MM-SS</code> is time of <code>IgQUAST</code> run.</br></br>
+</br>
+
+<!------------------------------------------------------------------>
+<a id="running"></a>
+<h2>3. Running IgQUAST</h2>
+
+<code>IgQUAST</code> tool takes as an input single or multiple pairs of CLUSTERS.FASTA and RCM files (see details in section <a href = "#ig_repertoire">1.1 What is antibody repertoire?</a>) and various options specific for each mode. 
+RCM files are optional since user does not always have information about mapping of Ig-Seq reads to clusters.</br></br> 
+
+Command line of IgQUAST:
+<pre class="code">
+<code>
+    ./ig_quast.py [options]
+</code>
+</pre>
+
+<!----------------------------------------->
+<a id = "basic_options"></a>
+<h3>3.1 Basic options</h3>
+
+<code>--c&lt;#> &lt;file_name></code></br>
+CLUSTERS.FASTA file with antibody clusters number &lt;#> (&lt;#> = 1, 2, 3, 4, 5) (required). 
+For example, for the first CLUSTERS.FASTA file the option is: <code>--c1 &lt;file_name></code>. </br></br>
+
+<code>--r&lt;#> &lt;file_name></code></br>
+RCM file with antibody clusters number &lt;#> (&lt;#> = 1, 2, 3, 4, 5). 
+For example, for the first RCM file the option is: <code>--r1 &lt;file_name></code>. </br></br>
+
+<code>--out &lt;output_dir></code></br>
+Output directory.
+If option <code>--out</code> is not specified, IgQUAST working directory is <code>&lt;igquast_installation_directory>/ig_quast_results/YYYY-MM-DD_HH-MM-SS</code>, where <code>YYYY-MM-DD_HH-MM-SS</code> is time of IgQUAST run. </br></br>
+
+<code>--help</code></br>
+Prints help.</br></br>
+
+<code>--test</code></br>
+Runs test dataset.
+IgQUAST command line is equivalent to:
+<pre class="code">
+<code>
+	./ig_quast.py --c1 ./test_dataset/test.clusters.fa --r1 ./test_dataset/test.rcm
+</code>
+</pre>
+
+<!----------------------------------------->
+<a id = "basic_output"></a>
+<h3>3.2 Basic output</h3>
+For each input repertoire &lt;repertoire_name> IgQUAST creates subdirectory <b>&lt;repertoire_name></b> and creates there the following files.</br>
+<b>NOTE: </b> if several repertoires have the same name <b>&lt;repertoire_name></b>, IgQUAST enumerates them and creates subdirectories <b>&lt;repertoire_name>_1</b>, <b>&lt;repertoire_name>_2</b> etc.
+<ul>
+    <li><b>clusters_sizes.txt</b> - file containing size of clusters of input repertoire.</li></br>
+
+    <li><b>Plots:</b></li>
+    <ul>
+        <li><b>all_cluster_sizes.png</b> - PNG file showing histogram of cluster size distribution for all clusters of input repertoire.</li>
+        <li><b>nt_cluster_sizes.png</b> - PNG file showing histogram of cluster size distribution for non-trivial (size > 1) clusters of input repertoire.</li>
+        <li><b>big_cluster_sizes.png</b> - PNG file showing histogram of cluster size distribution for big clusters (size > 25) of input repertoire.</li>
+        <li><b>constructed_cluster_lengths.png</b> - PNG file showing histogram of sequence length distribution.</li>
+    </ul></br>
+</ul>
+
+<p align = "center">
+<table class="image">
+    <tr>
+        <td><img src="pictures/all_cluster_sizes.png" style="width:420px"></td>
+        <td><img src="pictures/nt_cluster_sizes.png" style="width:420px"></td>
+    </tr>
+    <tr>
+        <td class="caption" align = "center">all_cluster_sizes.png</td>
+        <td class="caption" align = "center">nt_cluster_sizes.png</td>
+    </tr>
+    <tr>
+        <td><img src="pictures/big_cluster_sizes.png" style="width:420px"></td>
+        <td><img src="pictures/constructed_cluster_lengths.png" style="width:420px"></td>
+    </tr>
+    <tr>
+        <td class="caption" align = "center">big_cluster_sizes.png</td>
+        <td class="caption" align = "center">constructed_cluster_lengths.png</td>
+    </tr>
+</table>
+</p>
+
+<ul>
+    <li><b>ig_quast.log</b> - log of IgQUAST.</li>
+</ul>
+
+</br>
+
+<!------------------------------------------------------------------>
+<a id = "single_mode"></a>
+<h2>4.0 <em>Single repertoire evaluation</em> mode</h2>
+IgQUAST takes a sinlge repertoire as an input and computes a set of basic metrics and performs advanced analysis of mutated groups of input repertoire (optionally).
+
+<!----------------------------------------->
+
+<a id = "single_options"><a>
+<h3>4.1 <em>Single repertoire evaluation</em> options</h3>
+
+<code>--adv-analysis</code></br>
+Enables advanced analysis of mutated groups.
+Analysis searches similar clusters for each big cluster (by default, cluster of size >10), performs pairwise alignment and draws plot of polymorphism positions (see <a href = "#single_output"><em>Single repertoire evaluation</em> output</a>).</br></br>
+
+<code>--adv-min-size &lt;int></code></br>
+Minimal size of clusters that will be analyzed by advanced analysis of mutated groups. 
+Default value is '10'.</br>
+<b>NOTE:</b> Small value of <code>--adv-min-size</code> can significantly slow running time of IgQUAST. 
+
+<!----------------------------------------->
+<a id = "single_metrics"></a>
+<h3>4.2 <em>Single repertoire evaluation</em> metrics</h3>
+
+<table style="width:100%">
+    <col width="30%">
+    <col width="70%">
+  <tr>
+    <td><b>Metric name</b></td>
+    <td><b>Description</b></td> 
+  </tr>
+
+  <tr>
+    <td><em># clusters</em></td>
+    <td>Number of clusters of input repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em># singletons</em></td>
+    <td>Number of clusters of size 1.</td> 
+  </tr>
+
+  <tr>
+    <td><em>Max cluster</em></td>
+    <td>Size of maximal cluster.</td> 
+  </tr>
+
+  <tr>
+    <td><em>Avg cluster</em></td>
+    <td>Average size of clusters.</td> 
+  </tr>
+
+  <tr>
+    <td><em># clusters (>=N)</em></td>
+    <td>Number of clusters of size N or larger. 
+    IgQUAST uses several values of <em>N</em>: 10, 50, 100, 500, and 1000.</td> 
+  </tr>
+</table>
+
+<!----------------------------------------->
+<a id = "single_output"></a>
+<h3>4.3 <em>Single repertoire evaluation</em> output</h3>
+IgQUAST produces the following files in <em>Single repertoire evaluation</em> mode:
+
+<ul>
+    <li><b>Computed metrics:</b></li>
+    <ul>
+        <li><b>metrics.txt</b> - computed metrics in TXT format. 
+        Example of <b>metrics.txt</b> file for <em>Single repertoire evaluation</em> mode is listed below.:</li> 
+    </ul>
+</ul>
+
+<pre class="code">
+<code>
+    # clusters              145
+    # singletons            102
+    max cluster size        115
+    avg cluster size        7
+    # clusters (>=10)       31
+    # clusters (>=50)       4
+    # clusters (>=100)      1
+    # clusters (>=500)      0
+    # clusters (>=1000)     0
+</code>
+</pre>
+
+<ul>
+    <ul>
+        <li><b>metrics.csv</b> - computed metrics in CSV (comma-separated) format.</li>
+    </ul></br>
+
+    <li><b>Advanced analysis output:</b> located in subdirectory <b>advanced_analysis</b> including:</li>
+    <ul>
+        <li><b>blast.output</b> - result of BLAST alignment of input CLUSTERS.FA file against IMGT database.</li>
+        <li><b>igblast.output</b>  - result of IgBlast alignment of input CLUSTERS.FA file against database of human Ig germline genes.</li>
+        <li>subdirectory <b>somatic_search_results</b> including:</li>
+        <ul>
+            <li>subdirectories <b>cluster_&lt;N></b>, where N is id of analysed cluster. It includes plots of pairwise alignment against similar clusters and plot showing summarized alignment. Red bars on plots correspond to positions of CDRs predicted by IgBlast (see examples below).</li>
+            <li><b>polymorphism_positions.txt</b> - file contaning information about relative positions of all polymorphisms in constructed alignment.</li>
+            <li><b>polymorphism_positions.png</b> - PNG file showing histogram of distribution of polymorphism relative positions. Red bars correspond to theoretical positions of CDRs.</li>
+        </ul>
+    </ul>
+</ul>
+
+<p align = "center">
+<table class="image">
+    <tr>
+        <td><img src="pictures/cluster_16_cluster_29.png" style="width:420px"></td>
+        <td><img src="pictures/cluster_101.png" style="width:420px"></td>
+        <td><img src="pictures/polymorphism_positions.png" style="width:420px"></td>
+    </tr>
+    <tr>
+        <td class="caption" align = "center">example of plot of pairwise alignment</td>
+        <td class="caption" align = "center">example of plot of summarized alignment</td>
+        <td class="caption" align = "center">polymorphism_positions.png</td>
+    </tr>
+</table>
+</p>
+
+<!----------------------------------------->
+<a id = "single_examples"></a>
+<h3>4.4 <em>Single repertoire evaluation</em> examples</h3>
+
+Running IgQUAST on single repertoire presenting by CLUSTERS.FASTA file only, with <b>disabled advanced analysis</b> of mutated groups:
+<pre class="code">
+<code>
+    ./ig_quast.py --c1 repertoire.clusters.fa
+</code>
+</pre>  
+
+Running IgQUAST on single repertoire presenting by CLUSTERS.FASTA file only, with <b>enabled advanced analysis</b> of mutated groups. Advanced analysis will be performed for clusters larger 100 only:
+<pre class="code">
+<code>
+    ./ig_quast.py --c1 repertoire.clusters.fa --adv-analysis --adv-min-size 100
+</code>
+</pre>  
+</br>
+
+<!------------------------------------------------------------------>
+<!------------------------------------------------------------------>
+<a id = "multiple_mode"></a>
+<h2>5.0 <em>Multiple repertoires comparison</em> mode</h2>
+IgQUAST compares multiple repertoires constructed from the same sequencing library by different tools and computes their similarity. As a result, IgQUAST constructs the most probable relations between clusters of input repertoires based on the sequence alignment and information about read mapping in RCM files (optionally).
+
+<!----------------------------------------->
+<a id = "multiple_options"></a>
+<h3>5.1 <em>Multiple repertoires comparison</em> options</h3>
+
+<code>--errors &lt;int></code></br>
+Maximal allowed number of mismatches used in comparison of cluster sequences. Default value is '4'.</br></br>
+
+<code>--isol-min-size &lt;int></code></br>
+Size cutoff for isolated clusters comparison and drawing graphs. Default value is '20'.</br></br>
+
+<!----------------------------------------->
+<a id = "multiple_metrics"></a>
+<h3>5.2 <em>Multiple repertoires comparison</em> metrics</h3>
+
+<h4>General metrics for all compared repertoires</h4>
+<table style="width:100%">
+  <col width="30%">
+  <col width="70%">
+  <tr>
+    <td><b>Metric name</b></td>
+    <td><b>Description</b></td> 
+  </tr>
+
+  <tr>
+    <td><em># ideal groups</em></td>
+    <td>Number of clusters that are identical in all input repertoires, i.e. have similar sequences and were combined by the same set of reads</td> 
+  </tr>
+
+  <tr>
+    <td><em># trusted groups</em></td>
+    <td>Number of groups where clusters from different repertoires have similar sequences and share >90% of reads. Such groups occur when cluster from one repertoire is presented by one big and several small clusters in other repertoires. These groups can be result of inaccurate error correction of one of input repertoires.</td> 
+  </tr>
+
+  <tr>
+    <td><em># untrusted groups</em></td>
+    <td>Number of groups where clusters from different repertoires have non-similar sequences and share >90% of reads.  Existence of such groups indicates that at least one of cluster sequence from untrusted group is erroneous and should be reconstructed</td> 
+  </tr>
+
+  <tr>
+    <td><em># non-trivial ideal/trusted/untrusted groups</em></td>
+    <td>Ideal/trusted/untrusted groups where at least one cluster is not singleton.</td> 
+  </tr>
+
+  <tr>
+    <td><em># big untrusted groups</em></td>
+    <td>Number of groups of big clusters (only clusters of size at least as specified with option <code>--isol-min-size</code>) from different repertoires that have similar sequences and share >90% of reads.</td> 
+  </tr>
+</table>
+
+<h4>Individual metrics for each repertoire</h4>
+<table width = "100%">
+  <col width="30%">
+  <col width="70%">
+  <tr>
+    <td><b>Metric name</b></td>
+    <td><b>Description</b></td> 
+  </tr>
+
+  <tr>
+    <td><em># isolated clusters</em></td>
+    <td>Number of clusters that presented in only one input repertoire and have no similar clusters in other repertoires.</td> 
+  </tr>
+
+  <tr>
+    <td><em># short clusters</em></td>
+    <td>Number of clusters with length of sequence &lt;300 nt.</td> 
+  </tr>
+
+  <tr>
+    <td><em># short isolated clusters</em></td>
+    <td>Number of isolated clusters with length of sequence &lt;300 nt.</td> 
+  </tr>
+
+  <tr>
+    <td><em>min/avg/max cluster size</em></td>
+    <td>Minimal/average/maximal size of isolated cluster.</td> 
+  </tr>
+
+  <tr>
+    <td><em># trivial isolated clusters</em></td>
+    <td>Number of isolated singletons</td> 
+  </tr>
+</table>
+
+<!----------------------------------------->
+<a id = "multiple_output"></a>
+<h3>5.3 <em>Multiple repertoires comparison</em> output</h3>
+
+<ul>
+
+    <li><b>Computed metrics:</b></li>
+    <ul>
+        <li><b>metrics.txt</b> computed metrics in TXT format. Example of <b>metrics.txt</b> file for <em>Multiple repertoires comparison</em> mode is listed below.</li>
+    </ul>
+</ul>
+
+<pre class="code">
+<code>
+    General metrics:
+    #ideal groups                                259673
+    #trusted_groups                              259756
+    #untrusted_groups (>4 errors)                182853
+    #non-trivial ideal groups                    14434
+    #non-trivial trusted_groups                  14517
+    #non-trivial untrusted_groups (>4 errors)    436
+    #big untrusted groups (>4 errors, size >20)  5
+
+    Metrics for repertoires:
+
+    repertoire_1.clusters.fa:
+    #clusters                                  473296
+    #singletons                                447113
+    max constructed cluster size               241
+    avg constructed cluster size               1
+    #isolated clusters                         190771
+    #short isolated_clusters (&lt;300bp)          4160
+    min isolated cluster size                  1
+    avg isolated cluster size                  1.034
+    max isolated cluster size                  39
+    #trivial isolated clusters (size = 1)      187242
+
+    repertoire_2.clusters.fa:
+    #clusters                                  470529
+    #singletons                                443432
+    max constructed cluster size               400
+    avg constructed cluster size               1
+    #isolated clusters                         188902
+    #short isolated_clusters (&lt;300bp)          4081
+    min isolated cluster size                  1
+    avg isolated cluster size                  1.054
+    max isolated cluster size                  400
+    #trivial isolated clusters (size = 1)      184001
+
+</code>
+</pre>  
+
+<ul>
+    <ul>
+        <li><b>metrics.csv</b> computed metrics in CSV (comma separated) format.</li>
+    </ul></br>
+
+    <li><b>Statistics</b>:</li>
+    <ul>
+    		<li><b>stats/neighbour_clusters.txt</b> - file with closest clusters (<a href = "#neighbour_clusters.txt">description of <b>neighbour_clusters.txt</b> file</a>).</li>
+    		<li><b>stats/big_isolated_clusters.txt</b> - file with alignments for big isolated clusters (<a href = "#big_isolated_clusters.txt">description of <b>big_isolated_clusters.txt</b> file</a>).</li>
+    		<li><b>stats/big_untrusted_groups.txt</b> - file with alignments for clusters from big untrusted groups (<a href = "#big_isolated_clusters.txt">description of <b>big_untrusted_groups.txt</b> file</a>).</li>
+    </ul></br>
+    
+    <li><b>Plots:</b></li>
+    <ul>
+        <li><b>cluster_groups.png</b> - PNG file with cluster groups shared percentage distribution.</li>
+        <li><b>cluster_groups_nt.png</b> - PNG file with non-trivial cluster groups shared percentage distribution.</li>
+        <li><b>isolated_cluster_sizes.png</b> - PNG file with histograms of distribution of isolated cluster sizes for constructed repertoires.</li>
+        <li><b>isolated_nt_cluster_sizes.png</b> - PNG file with histograms of distribution of non-trivial isolated cluster sizes given constructed repertoires.</li>
+        <li><b>isolated_big_cluster_sizes.png</b> - PNG file with histograms of distribution of big isolated cluster sizes for constructed repertoires.</li>
+        <li><b>isolated_cluster_lengths.png</b> - PNG file with histograms of distribution of isolated cluster lengths for constructed repertoires.</li>        
+    </ul></br>
+</ul>
+
+<p align = "center">
+<table class="image">
+    <col width="33%">
+    <col width="33%">
+    <col width="33%">
+
+    <tr>
+        <td><img src="pictures/cluster_groups12.png" style="width:420px"></td>
+        <td><img src="pictures/cluster_groups_nt_12.png" style="width:420px"></td>
+        <td><img src="pictures/isolated_cluster_sizes_12.png" style="width:420px"></td>
+    </tr>
+
+    <tr>
+        <td class="caption" align = "center">cluster_groups.png</td>
+        <td class="caption" align = "center">cluster_groups_nt.png</td>
+        <td class="caption" align = "center">isolated_cluster_sizes.png</td>
+    </tr>
+
+    <tr>
+        <td><img src="pictures/isolated_nt_cluster_sizes_12.png" style="width:420px"></td>
+        <td><img src="pictures/isolated_big_cluster_sizes_12.png" style="width:420px"></td>
+        <td><img src="pictures/isolated_cluster_lengths_12.png" style="width:420px"></td>
+    </tr>
+
+    <tr>
+        <td class="caption" align = "center">isolated_nt_cluster_sizes.png</td>
+        <td class="caption" align = "center">isolated_big_cluster_sizes.png</td>
+        <td class="caption" align = "center">isolated_cluster_lengths.png   </td>
+    </tr>
+</table>
+</p>   
+
+<ul>
+    <li><b>cluster_graphs</b> - directory with DOT files showing relations between clusters of compared repertoires (<a href = "#cluster_graphs">examples of cluster graphs</a>).</br>
+    <b>NOTE:</b> IgQUAST draws cluster graphs only if all RCM files were provided. 
+    </li>
+</ul>
+
+<a id = "neighbour_clusters.txt"></a>
+<h4><b>neighbour_clusters.txt</b> file format</h4>
+File contains map from clusters from one repertoire to another (neighbour clusters are determined as closest in terms of hamming distance) in following format:
+<pre class="code">
+<code>
+rep_id1./path/to/rep1 rep_id2./path/to/rep2 
+rep_id1.cluster_id1 - rep_id2.cluster_id2 (score = score)  
+...
+</code>
+</pre>
+
+<a id = "big_isolated_clusters.txt"></a>
+<h4><b>big_isolated_clusters.txt / big_untrusted_groups.txt</b> file format</h4>
+For each big isolated cluster stores information about hamming distances to all clusters that shares reads with the current cluster in following format:
+<pre class="code">
+<code>
+rep_id1./path/to/rep1 
+rep_id2./path/to/rep2 
+Cluster rep_id1.cluster_id1(size = cluster_size)
+    rep_id2.cluster_id2 shared #shared_reads: score = alignment_score, shift = seq_shift, errors = hamming_distance, strand = strand
+    ...
+
+----------------------------------------------------------
+
+Cluster ...
+</code>
+</pre>
+
+<a id = "cluster_graphs"></a>
+<h4>Cluster graphs</h4>
+Cluster graph shows relation between similar clusters from the different repertoires and represents one the following situation:
+<ul>
+    <li>ideal group (left graph on the figure below)</li>
+    <li>trusted group (middle graph on the figure below)</li>
+    <li>untrusted group (right graph on the figure below)</li>
+</ul>
+The following notations are used in cluster graph:
+<ul>
+    <li>Vertices correspond to clusters. Clusters of one repertoire are highlighted with the same color.</li>
+    <li>Red edge means that corresponding clusters have similar antibody sequences, i.e. hamming distance between these sequences &lt;<code>errors</code>.</li>
+    <li>Black edge means that corresponding clusters have non-similar antibody sequences, i.e. hamming distance between these sequences ><code>errors</code>.</li>
+    <li>Edge of weight N means that corresponding clusters share N reads.</li> 
+</ul>
+
+<table width = "100%">
+    <col width="32%">
+    <col width = "2%">
+    <col width="32%">
+    <col width = "2%">
+    <col width="32%">
+
+    <tr>
+        <td align = "center">
+            <img src="pictures/cluster_graphs/ideal.dot.png" width = "80px">
+        </td>
+
+        <td></td>
+
+        <td align = "center">
+            <img src="pictures/cluster_graphs/trusted.dot.png" width = "200px">
+        </td>
+
+        <td></td>
+
+        <td align = "center">
+            <img src="pictures/cluster_graphs/untrusted.dot.png" width = "200px">
+        </td>
+    </tr>
+
+    <tr>
+        <td align = "center">
+            (a) Example of <b>ideal group</b>
+        </td>
+
+        <td></td>
+
+        <td align = "center">
+            (b) Example of <b>trusted group</b>
+        </td>
+
+        <td></td>
+
+        <td align = "center">
+            (c) Example of <b>untrusted group</b>
+        </td>
+    </tr>
+
+    <tr></tr>
+
+    <tr>
+        <td align = "justify">
+            <b>Description</b>. Cluster #1 of size 20 from the first repertoire (shown by red) and cluster #1 of size 20 from the second repertoire (shown by blue) share the same set of clusters and have almost identical antibody sequences (number of mismatches is less than <code>errors</code>).
+        </td>
+
+        <td></td>
+
+        <td align = "justify">
+            <b>Description</b>. Cluster #1 (size 22) from the "blue" repertoire and cluster #4 (size 23) from the "red" repertoire form trusted group since they share >90% reads (21 is a weight of the edge between clusters) and have similar antibody sequences (edge is red). Blue singletons 2 and 3 share reads with red cluster 4, while red singleton 5 share read with blue cluster 1.
+        </td>
+
+        <td></td>
+
+        <td align = "justify">
+            <b>Description</b>. Cluster #1 (size 22) from the "blue" repertoire and cluster #4 (size 23) from the "red" repertoire form untrusted group since they share >90% reads (21 is a weight of the edge between clusters) and have non-similar antibody sequences (edge is black). 
+        </td>
+    </tr>
+</table>
+
+<!----------------------------------------->
+<a id = "multiple_examples"></a>
+<h3>5.4 <em>Multiple repertoires comparison</em> examples</h3>
+
+Running IgQUAST on two repertoires.</br>
+<pre class="code">
+<code>
+	./ig_quast.py --c1 constructed_repertoire1.clusters.fa --r1 constructed_repertoire1.rcm \
+        --c2 constructed_repertoire2.clusters.fa --r2 constructed_repertoire2.rcm
+</code>
+</pre>
+
+Running IgQUAST on two repertoires without RCM files. <code>errors</code> = 0 means that only ideal matches of antibody sequences (up to shifts) are allowed.</br>
+<pre class="code">
+<code>
+	./ig_quast.py --c1 constructed_repertoire1.clusters.fa --c2 constructed_repertoire2.clusters.fa --errors 0
+</code>
+</pre>
+</br>
+
+<!------------------------------------------------------------------>
+<!------------------------------------------------------------------>
+<a id = "ideal_mode"></a>
+<h2>6.0 <em>Quality assessment against ideal repertoire</em> mode</h2>
+IgQUAST allows one to evaluate the repertoire for data sets with respect to a known ideal repertoire (e.g., in the case of simulated data). 
+IgQUAST computes repertoire <em>sensitivity</em> (the measure of the representation of the ideal clusters by the constructed clusters) and <em>specificity</em> (the error rate of the incorrectly merged clusters of the ideal repertoire).
+
+<!----------------------------------------->
+<a id = "ideal_options"></a>
+<h3>6.1 <em>Quality assessment against ideal repertoire</em> options</h2>
+
+<code>--Rc &lt;ideal_repertoire.clusters.fa></code></br>
+CLUSTERS.FASTA file with ideal repertoire.</br></br>
+
+<code>--Rr &lt;ideal_repertoire.rcm></code></br>
+RCM file with ideal repertoire.</br></br>
+
+<!----------------------------------------->
+<a id = "ideal_metrics"></a>
+<h3>6.2 <em>Quality assessment against ideal repertoire</em> metrics</h2>
+
+<table width = "100%">
+  <col width="30%">
+  <col width="70%">
+  <tr>
+    <td><b>Metric name</b></td>
+    <td><b>Description</b></td> 
+  </tr>
+
+  <tr>
+    <td><em># original clusters</em></td>
+    <td>Number of clusters in ideal repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em># not merged</em></td>
+    <td>Number of non-trivial clusters in the original repertoire that contain multiple clusters in the constructed repertoire. For a correctly constructed repertoire, the value of #this metric is 0.</td> 
+  </tr>
+
+  <tr>
+    <td><em># not merged (not trivial + singletons)</em></td>
+    <td>Number of not merged clusters that are formed by a single non-trivial cluster and a number of singletons in the constructed repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em># original singletons</em></td>
+    <td>number of singletons in ideal repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em>max original cluster</em></td>
+    <td>Size of maximal cluster from ideal repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em># constructed clusters</em></td>
+    <td>Number of constructed clusters.</td> 
+  </tr>
+
+  <tr>
+    <td><em># errors</em></td>
+    <td>Number of constructed clusters that contain reads from more than one original cluster. For the correctly constructed repertoire, this metric is 0.</td> 
+  </tr>
+
+  <tr>
+    <td><em># constructed singletons</em></td>
+    <td>Number of constructed singleton clusters.</td> 
+  </tr>
+
+  <tr>
+    <td><em>max constructed cluster</em></td>
+    <td>size of maximal constructed cluster.</td> 
+  </tr>
+
+  <tr>
+    <td><em>avg fill-in</em></td>
+    <td>The value of avg fill-in for an original cluster C is computed as the ratio of the size of its largest non-erroneous subcluster in the constructed repertoire to the size of C.</td> 
+  </tr>
+
+  <tr>
+    <td><em>fill-in of max cluster</em></td>
+    <td>Maximal cluster of the original repertoire corresponds to the most frequent monoclonal antibodies. This metric is equal to the fill-in of the maximal original cluster.</td> 
+  </tr>
+
+  <tr>
+    <td><em>correct singletons (%)</em></td>
+    <td>Some singletons in the constructed repertoire can be false due to insufficient error correction.  This metric shows percentage of true singletons in the constructed repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em>used reads (%)</em></td>
+    <td>Percentage of reads used in the repertoire reconstruction. This metric shows how well the reads have been utilized for reconstructing repertoires.</td> 
+  </tr>
+
+  <tr>
+    <td><em>#lost clusters</em></td>
+    <td>Number of original clusters that were completely lost in the constructed repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em>lost clusters size (%)</em></td>
+    <td>Percentage of the lost clusters size as compared to full size of original repertoire.</td> 
+  </tr>
+
+  <tr>
+    <td><em>min/avg/max percentage of identity (%)</em></td>
+    <td>Minimal/average/maximal percentage of identity between sequences of clusters from original repertoire and corresponding clusters in constructed repertoire (corresponding cluster from constructed repertoire selected as a cluster that have most shared reads with cluster in original repertoire).</td> 
+  </tr>
+</table>
+
+<!----------------------------------------->
+<a id = "ideal_output"></a>
+<h3>6.3 <em>Quality assessment against ideal repertoire</em> output</h2>
+
+<ul>
+    <li>Compluted metrics:</li>
+    <ul>
+        <li><b>metrics.txt</b> - computed metrics in TXT format. Example of <b>metrics.txt</b> file for <em>Quality assessment against ideal repertoire</em> mode is listed below.</li>
+    </ul>
+</ul>
+
+<pre class="code">
+    <code>
+    #original clusters				64
+    #not merged					34
+    #not merged (not trivial + singletons)	13
+    #original singletons			2
+    max original cluster			116
+    #constructed clusters			145
+    #errors					0
+    #constructed singletons			102
+    max constructed cluster			115
+    avg fill-in					0.536
+    max cluster fill-in				0.991
+    #correct singletons				2
+    used reads (%)				100
+    #lost clusters				0
+    lost clusters size (%)			0
+    min percentage of identity (%)		95.4
+    avg percentage of identity (%)		98.7
+    max percentage of identity (%)		100
+    </code>
+</pre>
+
+<ul>
+    <ul>
+        <li><b>metrics.csv</b> - computed metrics in CSV (comma-separated) format.</li>
+    </ul></br>
+
+    <li><b>Plots:</b></li>
+    <ul> 
+        <li><b>identity_perc_distribution.png</b> - PNG file with histogram of distribution of sequence identity percentage between original and constructed repertoires.</li>
+        <li><b>identity_perc_length.png</b> - PNG file with plot of dependence of sequence identity percentage from sequence length between original and constructed repertoires.</li>
+    </ul></br>
+</ul>
+
+<p align = "center">
+<table class="image">
+    <tr>
+        <td><img src="pictures/identity_perc_distribution.png" style="width:420px"></td>
+        <td><img src="pictures/identity_perc_length.png" style="width:420px"></td>
+    </tr>
+    <tr>
+        <td class="caption" align = "center">identity_perc_distribution.png</td>
+        <td class="caption" align = "center">identity_perc_length.png</td>
+    </tr>
+</table>
+
+<!----------------------------------------->
+<a id = "ideal_examples"></a>
+<h3>6.4 <em>Quality assessment against ideal repertoire</em> examples</h3>
+
+Running IgQUAST on test data with one constructed repertoire and ideal repertoire.</br>
+<pre class="code">
+<code>
+	./ig_quast.py --Rc ideal_repertoire.clusters.fa --Rr ideal_repertoire.rcm --c1 constructed_repertoire.clusters.fa --r1 constructed_repertoire.rcm
+</code>
+</pre>
+
+Running IgQUAST on test data with several constructed repertoire and ideal repertoire.</br>
+<pre class="code">
+<code>
+    ./ig_quast.py --Rc ideal_repertoire.clusters.fa --Rr ideal_repertoire.rcm --c1 constructed_repertoire1.clusters.fa --r1 constructed_repertoire1.rcm \ 
+        --c2 constructed_repertoire2.clusters.fa --r2 constructed_repertoire2.rcm
+</code> 
+</pre>
+
+</br>
+<!------------------------------------------------------------------>
+
+<a id = "feedback"></a>
+<h2>7. Feedback and bug reports</h2>
+Your comments, bug reports, and suggestions are very welcomed.
+They will help us to further improve IgTools.
+<br><br>
+If you have any troubles running IgTools, please send us log file from output output directory.
+<br><br>
+Address for communications: <a href="mailto:safonova.yana@gmail.com">safonova.yana@gmail.com</a> (Yana Safonova). 
+
+</font>
+
+</body>

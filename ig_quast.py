@@ -49,8 +49,9 @@ class Params:
     log = ""
 
     size_cutoff = 20
-    max_mismatches = 4
-    max_gaps = 0
+    tau = 3
+    # max_mismatches = 4
+    # max_gaps = 0
 
     threads_num = 4
 
@@ -64,10 +65,11 @@ class Params:
     inexact_metrics = dict()
 
     # temporary 
-    neighbour_clusters_file = ""
+    # neighbour_clusters_file = ""
+    matches_files = []
 
 class BaseOptions:
-    long_options = ("skip-drawing test help adv-analysis adv-output mismatches= gaps= isol-min-size= adv-min-size= Rc= Rr= out= threads-num=".split() +
+    long_options = ("skip-drawing test help adv-analysis adv-output tau= isol-min-size= adv-min-size= Rc= Rr= out= threads-num=".split() +
                     ["c" + str(i) + "=" for i in
                         xrange(1, Params.max_repertoires_number + 1)] +
                     ["r" + str(i) + "=" for i in
@@ -80,8 +82,8 @@ def usage(log):
     log.info("\nRepertoire options:")
     log.info("  --Rc\t\t\t<filename>\tCLUSTERS file with original (ideal) repertoire")
     log.info("  --Rr\t\t\t<filename>\tRCM file with original (ideal) repertoire")
-    log.info("  --c<#>\t\t<filename>\tCLUSTERS file with constructed repertoire number <#> (<#> = 1,2,3,4,5)")
-    log.info("  --r<#>\t\t<filename>\tRCM file with constructed repertoire number <#> (<#> = 1,2,3,4,5)")
+    log.info("  --c<#>\t\t<filename>\tCLUSTERS file with constructed repertoire number <#> (<#> = 1,2)")
+    log.info("  --r<#>\t\t<filename>\tRCM file with constructed repertoire number <#> (<#> = 1,2)")
 
     log.info("\nBasic options:")
     log.info("  --test\t\t\t\truns test dataset")
@@ -89,8 +91,7 @@ def usage(log):
     log.info("  --help\t\t\t\tprints help")
 
     log.info("\n\"Multiple repertoires comparison\" options:")
-    log.info("  --mismatches\t\t<int>\t\tmaximal allowed mismatches count for cluster sequence comparison [default: %i]" % Params.max_mismatches)
-    log.info("  --gaps\t\t<int>\t\tmaximal allowed gaps count for cluster sequence comparison [default: %i]" % Params.max_gaps)
+    log.info("  --tau\t\t<int>\t\tmaximal allowed distance between clusters [default: %i]" % Params.tau)
     log.info("  --threads-num\t\t<int>\t\tnumber of threads to use [default: %i]" % Params.threads_num)
     log.info("  --isol-min-size\t\t<int>\t\tsize cutoff for isolated clusters comparison and drawing graphs [default: %i]" % Params.size_cutoff)
     log.info("  --adv-output\t\t<int>\t\toutput cluster graphs")
@@ -121,16 +122,14 @@ def ParseCommandLine(params, log):
         elif opt == '--help':
             usage(log)
             sys.exit(0)
-        elif opt == '--mismatches':
-            params.max_mismatches = int(arg)
-        elif opt == '--gaps':
-            params.max_gaps = int(arg)
+        elif opt == '--tau':
+            params.tau = int(arg)
         elif opt == '--threads-num':
             params.threads_num = int(arg)
         elif opt == '--isol-min-size':
             params.size_cutoff = int(arg)
         elif opt == '-n':
-            params.neighbour_clusters_file = arg
+            params.matches_files = arg
         elif opt[:-1] == '--c':
             num = int(opt[-1])
             constructed_clusters_raw[num][0] = os.path.abspath(arg)
@@ -268,6 +267,7 @@ def RunGeneralEvaluator(params, log):
         log.info("ERROR: Computed metrics were not found")
         sys.exit(1)
 
+'''
 def RunRepertoiresComparer(log, params):
     log.info(".. Building neighbour clusters")
     neighbour_clusters_output = os.path.join(params.stats_dir, "neighbour_clusters.txt")
@@ -288,9 +288,49 @@ def RunRepertoiresComparer(log, params):
 
     log.info("* Neighbour clusters were written to " + neighbour_clusters_output)
     return reading_utils.read_neighbour_clusters(neighbour_clusters_output, params.evaluator.repertoires)
+'''
+
+def RunIgMatcher(log, params):
+    log.info(".. Building neighbour clusters")
+    matches_files = [os.path.join(params.stats_dir, params.evaluator.repertoires[0].name), 
+                     os.path.join(params.stats_dir, params.evaluator.repertoires[1].name)]
+    aln_filenames = []
+    cluster_num_to_ids = []
+    for rep in params.evaluator.repertoires:
+        aln_filenames.append(os.path.join(params.stats_dir, rep.name + '.fa'))
+        command_line = ig_tools_init.PathToBins.run_ig_kplus_vj_finder_tool + \
+                ' -i ' + rep.clusters_filename + \
+                ' -o ' + aln_filenames[-1] + \
+                ' -b ' + os.path.join(params.stats_dir, rep.name + '.bad.fa') + ' -S'
+        exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
+        if exit_code != 0:
+            AbnormalFinishMsg(log, 'ig_kplus_vj_finder')
+            sys.exit(-1)
+        if not os.path.exists(aln_filenames[-1]):
+            log.info('ERROR: cannot find alignment file ' + aln_filenames[-1])
+            sys.exit(-1)
+        cluster_num_to_ids.append(reading_utils.read_cluster_numbers_to_ids(aln_filenames[-1]))
+
+    command_line = ig_tools_init.PathToBins.run_ig_matcher_tool + \
+            ' -i ' + aln_filenames[0] + \
+            ' -I ' + aln_filenames[1] + \
+            ' --tau ' + str(params.tau) + ' --threads ' + str(params.threads_num) + \
+            ' -o ' + matches_files[0] + \
+            ' -O ' + matches_files[1]
+
+    exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
+    if exit_code != 0:
+        AbnormalFinishMsg(log, "ig_matcher")
+        sys.exit(-1)
+    if any(not os.path.exists(filename) for filename in matches_files):
+        log.info('ERROR: cannot find neighbour clusters file') 
+        sys.exit(-1)
+
+    log.info("* Neighbour clusters were written to " + str(matches_files))
+    return reading_utils.read_neighbour_clusters(matches_files, params.evaluator.repertoires, cluster_num_to_ids)
 
 def RunInexactEvaluator(params, log):
-    neighbour_clusters = RunRepertoiresComparer(log, params)
+    neighbour_clusters = RunIgMatcher(log, params)
     log.info(".. Analizing neighbour clusters")
     params.evaluator.add_neighbour_clusters(neighbour_clusters)
     log.info(".. Analyzing reads")
@@ -299,7 +339,7 @@ def RunInexactEvaluator(params, log):
     params.evaluator.build_connectivity_components()
     log.info(".. Calculating metrics")
     params.inexact_metrics = inexact_metrics_utils.evaluate_metrics(params.evaluator, 
-        params.size_cutoff, params.max_mismatches)
+        params.size_cutoff, params.tau)
     params.file_metrics['general'] = os.path.join(params.output_dir, "metrics.txt")
     params.file_metrics_csv['general'] = os.path.join(params.output_dir, "metrics.csv")
     inexact_evaluator_writing_utils.write_metrics('stdout', params.inexact_metrics, 'txt')
@@ -600,11 +640,8 @@ def CheckParams(params, log):
             if not os.path.exists(params.original_clusters[1]):
                 log.info("ERROR: RCM with ideal repertoire " + params.original_clusters[1] + " was not found")
             sys.exit(1)
-    if params.max_mismatches < 0:
-        log.info("ERROR: value for --mismatches must be >= 0")
-        sys.exit(1)
-    if params.max_gaps < 0:
-        log.info("ERROR: value for --gaps must be >= 0")
+    if params.tau < 0:
+        log.info("ERROR: value for --tau must be >= 0")
         sys.exit(1)
     if params.size_cutoff < 0:
         log.info("ERROE: value for --size-cutoff must be >= 0")

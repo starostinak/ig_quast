@@ -23,7 +23,7 @@ def read_repertoires(repertoires_list):
 def read_fasta(fasta):
     clusters = {}
     fasta_records = SeqIO.parse(open(fasta), 'fasta')
-    for rec in fasta_records:
+    for i, rec in enumerate(fasta_records):
         fields = rec.id.split('___')
         if len(fields) != 4:
             print "ERROR: wrong format of cluster id " + rec.id + ", must be in format cluster___id___size___sz"
@@ -59,23 +59,37 @@ def read_rcm(rcm, read_ids):
         read_clusters[read_id] = cluster_no
     return cluster_reads, read_clusters
 
-def read_neighbour_clusters(filename, repertoires):
-    cluster_pairs = [[None] * len(repertoires) for i in xrange(len(repertoires))]
-    handle = open(filename)
-    handle.readline()
+def read_cluster_numbers_to_ids(filtered_clusters_fa):
+    cluster_num_to_id = {}
+    fasta_records = SeqIO.parse(open(filtered_clusters_fa), 'fasta')
+    for i, rec in enumerate(fasta_records):
+        fields = rec.id.split('___')
+        if len(fields) != 4:
+            print "ERROR: wrong format of cluster id " + rec.id + ", must be in format cluster___id___size___sz"
+            sys.exit(1)
+        cluster_num_to_id[i] = int(fields[1])
+    return cluster_num_to_id
 
-    for l in handle:
-        fields = l.strip().split(' ')
-        rep1, cluster1 = fields[0].split('.')
-        rep1, cluster1 = int(rep1) - 1, int(cluster1)
-        rep2, cluster2 = fields[2].split('.')
-        rep2, cluster2 = int(rep2) - 1, int(cluster2)
-        score = int(fields[5][:-1])
-        if not cluster_pairs[rep1][rep2]:
-            cluster_pairs[rep1][rep2] = {}
-        if cluster1 not in cluster_pairs[rep1][rep2]:
-            cluster_pairs[rep1][rep2][cluster1] = [set(), 0]
-        cluster_pairs[rep1][rep2][cluster1][0].add(cluster2)
-        cluster_pairs[rep1][rep2][cluster1][1] = score
-    
+def read_neighbour_clusters(matches_filenames, repertoires, cluster_num_to_ids):
+    cluster_pairs = [[None] * len(repertoires) for i in xrange(len(repertoires))]
+    for rep_id1, filename in enumerate(matches_filenames):
+        handle = open(filename)
+        rep_id2 = 1 - rep_id1
+        for cluster_no1, l in enumerate(handle):
+            fields = l.strip().split(' ')
+            if not fields:
+                continue
+            score = fields[0]
+            cluster_nums = fields[1:]
+            rep1, cluster1 = rep_id1, cluster_num_to_ids[rep_id1][cluster_no1]
+            for cluster_no2 in cluster_nums:
+                cluster_no2 = int(cluster_no2)
+                rep2, cluster2 = rep_id2, cluster_num_to_ids[rep_id2][cluster_no2]
+                if not cluster_pairs[rep1][rep2]:
+                    cluster_pairs[rep1][rep2] = {}
+                if cluster1 not in cluster_pairs[rep1][rep2]:
+                    cluster_pairs[rep1][rep2][cluster1] = [set(), 0]
+                cluster_pairs[rep1][rep2][cluster1][0].add(cluster2)
+                cluster_pairs[rep1][rep2][cluster1][1] = score
+        
     return cluster_pairs

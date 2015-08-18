@@ -15,4 +15,7 @@ bin
 build_spades
 share
 ig_quast_results
-
+prepare_ig_tools.log
+*.swp
+*.swo
+add_info.csv

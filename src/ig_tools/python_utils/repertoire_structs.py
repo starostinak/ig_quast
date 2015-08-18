@@ -1,3 +1,5 @@
+import os.path 
+
 class Repertoire:
     def __init__(self, clusters_filename, rcm_filename, clusters, cluster_reads = None, read_clusters = None, name = None):
         self.clusters_filename = clusters_filename
@@ -5,7 +7,7 @@ class Repertoire:
         self.clusters = clusters
         self.cluster_reads = cluster_reads
         self.read_clusters = read_clusters
-        self.name = name if name else clusters_filename
+        self.name = name if name else os.path.basename(clusters_filename)
 
     def __str__(self):
         return ('Clusters: ' + str(self.clusters) + ', \n reads: ' + 

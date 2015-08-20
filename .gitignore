@@ -1,5 +1,3 @@
-bin/*
-build/
 logs/
 output/
 spades_test/
@@ -11,7 +9,6 @@ share/
 *.pyo
 *.class
 tags
-bin
 build_spades
 share
 ig_quast_results

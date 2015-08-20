@@ -14,8 +14,8 @@ import shutil
 import datetime
 from time import gmtime, strftime
 
-import ig_tools_init
-from ig_tools_init import AbnormalFinishMsg
+import init
+from init import AbnormalFinishMsg
 
 import drawing_utils
 import clusters_utils
@@ -27,7 +27,7 @@ import inexact_evaluator_writing_utils
 import somatic_mutation_search
 
 class Params:
-    max_repertoires_number = 5
+    max_repertoires_number = 2
 
     constructed_clusters = None
     original_clusters = ["", ""]
@@ -185,7 +185,7 @@ def RunExactEvaluator(params, log):
             out_name = os.path.join(params.output_dir, "metrics")
         else:
             out_name = os.path.join(params.output_dir, rep.name, "metrics")
-        command_line = ig_tools_init.PathToBins.run_repertoire_evaluator_tool + " " + \
+        command_line = init.PathToBins.run_repertoire_evaluator_tool + " " + \
             params.original_clusters[1] + " " + params.original_clusters[0] + " " + \
             rcm + " " + clusters + " " + out_name
         error_code = os.system(command_line + " 2>&1 | tee -a " + params.log)
@@ -274,7 +274,7 @@ def RunRepertoiresComparer(log, params):
     if params.neighbour_clusters_file != "":
         neighbour_clusters_output = params.neighbour_clusters_file
     else:
-        command_line = ig_tools_init.PathToBins.run_repertoire_comparer_tool + \
+        command_line = init.PathToBins.run_repertoire_comparer_tool + \
                 ' --max_mismatches ' + str(params.max_mismatches) + ' --max_gaps ' + str(params.max_gaps) + \
                 ' --threads ' + str(params.threads_num) + ' --out ' + neighbour_clusters_output + ' ' + \
                 ' '.join(rep.clusters_filename for rep in params.evaluator.repertoires)
@@ -298,7 +298,7 @@ def RunIgMatcher(log, params):
     cluster_num_to_ids = []
     for rep in params.evaluator.repertoires:
         aln_filenames.append(os.path.join(params.stats_dir, rep.name + '.fa'))
-        command_line = ig_tools_init.PathToBins.run_ig_kplus_vj_finder_tool + \
+        command_line = init.PathToBins.run_ig_kplus_vj_finder_tool + \
                 ' -i ' + rep.clusters_filename + \
                 ' -o ' + aln_filenames[-1] + \
                 ' -b ' + os.path.join(params.stats_dir, rep.name + '.bad.fa') + ' -S'
@@ -311,7 +311,7 @@ def RunIgMatcher(log, params):
             sys.exit(-1)
         cluster_num_to_ids.append(reading_utils.read_cluster_numbers_to_ids(aln_filenames[-1]))
 
-    command_line = ig_tools_init.PathToBins.run_ig_matcher_tool + \
+    command_line = init.PathToBins.run_ig_matcher_tool + \
             ' -i ' + aln_filenames[0] + \
             ' -I ' + aln_filenames[1] + \
             ' --tau ' + str(params.tau) + ' --threads ' + str(params.threads_num) + \
@@ -661,7 +661,7 @@ def PrintMainOutput(params, log):
 def RunBlast(clusters_fa, output_dir, log):   
     blast_output = os.path.join(output_dir, "blast.output") 
     log.info("\n== BLAST starts")
-    command_line = ig_tools_init.RunBlast() + " -db " + ig_tools_init.BlastDB() + " -query " + clusters_fa + " -num_alignments 3 -outfmt 7 > " + blast_output
+    command_line = init.RunBlast() + " -db " + init.BlastDB() + " -query " + clusters_fa + " -num_alignments 3 -outfmt 7 > " + blast_output
     log.info("BLAST command line: " + command_line)
     err_code = os.system(command_line)
     if err_code != 0:
@@ -673,9 +673,9 @@ def RunBlast(clusters_fa, output_dir, log):
 def RunIgBlast(clusters_fa, output_dir, log):
     igblast_output = os.path.join(output_dir, "igblast.output")
     log.info("\n== IgBlast starts")
-    igblast_command_line = ig_tools_init.RunIgblast() + " -germline_db_V "+ ig_tools_init.IgblastDirectory() +"database/human_gl_V -germline_db_J "+ ig_tools_init.IgblastDirectory() +"database/human_gl_J -germline_db_D "+ ig_tools_init.IgblastDirectory() +\
+    igblast_command_line = init.RunIgblast() + " -germline_db_V "+ init.IgblastDirectory() +"database/human_gl_V -germline_db_J "+ init.IgblastDirectory() +"database/human_gl_J -germline_db_D "+ init.IgblastDirectory() +\
 "database/human_gl_D -query "+ clusters_fa + " -show_translation -auxiliary_data auxilary_file -num_alignments 10  -outfmt \"7 qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore slen\" -domain_system imgt > " + igblast_output
-    os.environ['IGDATA'] = ig_tools_init.IgblastDirectory()
+    os.environ['IGDATA'] = init.IgblastDirectory()
     print("IgBlast command line: " + igblast_command_line)
     err_code = os.system(igblast_command_line)
     if err_code != 0:
@@ -748,7 +748,7 @@ def RunIgQUAST(params, log):
 
 def main():
 
-    sys.stdout=ig_tools_init.Unbuffered(sys.stdout)
+    sys.stdout=init.Unbuffered(sys.stdout)
 
     # prepare log
     log = logging.getLogger('ig_quast')
@@ -772,7 +772,7 @@ def main():
     params.log = log_filename
     log.info("\nLog will be written to " + log_filename + "\n")
 
-    ig_tools_init.PrintCommandLine(sys.argv, log)
+    init.PrintCommandLine(sys.argv, log)
 
     CheckParams(params, log)
 

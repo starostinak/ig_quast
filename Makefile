@@ -13,18 +13,18 @@ CXX=g++
 all: repertoire_evaluator ig_matcher ig_kplus_vj_finder
 
 repertoire_evaluator: src/ig_tools/exact_repertoire_evaluator/main_evaluate_repertoire.cpp
-	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/exact_repertoire_evaluator/main_evaluate_repertoire.cpp ${CXXLIBS} -o bin/ig_tools/repertoire_evaluator
+	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/exact_repertoire_evaluator/main_evaluate_repertoire.cpp ${CXXLIBS} -o bin/repertoire_evaluator
 
 ig_matcher: src/ig_tools/ig_matcher/ig_matcher.cpp src/ig_tools/ig_matcher/ig_matcher.hpp src/ig_tools/ig_matcher/banded_half_smith_waterman.hpp
-	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/ig_matcher/ig_matcher.cpp ${CXXLIBS} -o bin/ig_tools/ig_matcher
+	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/ig_matcher/ig_matcher.cpp ${CXXLIBS} -o bin/ig_matcher
 
 ig_kplus_vj_finder: src/ig_tools/ig_matcher/ig_kplus_vj_finder.cpp
-	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/ig_matcher/ig_kplus_vj_finder.cpp ${CXXLIBS} -o bin/ig_tools/ig_kplus_vj_finder
+	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/ig_matcher/ig_kplus_vj_finder.cpp ${CXXLIBS} -o bin/ig_kplus_vj_finder
 
 rep_comp:
-	g++ -std=c++11 -g -O0 -DEBUG -Isrc/include -Iext/include/seqan-library-2.0.0/include src/ig_tools/repertoire_comparer/main.cpp src/mph_index/MurmurHash3.cpp -o bin/ig_tools/repertoire_comparer -lboost_thread -lboost_system
+	g++ -std=c++11 -g -O0 -DEBUG -Isrc/include -Iext/include/seqan-library-2.0.0/include src/ig_tools/repertoire_comparer/main.cpp src/mph_index/MurmurHash3.cpp -o bin/repertoire_comparer -lboost_thread -lboost_system
 
 clean:
 	-rm *.o
-	-rm bin/ig_tools/repertoire_evaluator bin/ig_tools/ig_matcher
+	-rm bin/ig_tools/repertoire_evaluator bin/ig_matcher bin/ig_kplus_vj_finder
 

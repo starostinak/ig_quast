@@ -127,8 +127,8 @@ int get_string_mismatches(string const & seq1, size_t start1,
 }
 
 size_t score_sequences(string const & seq1, size_t start1, string const & seq2, size_t start2, int max_errors, int error_penalty) {
-	size_t len = min(seq1.size() - start1, seq2.size() - start2);
-	size_t errors = get_string_mismatches(seq1, start1, seq2, start2, max_errors);
+	int len = min(seq1.size() - start1, seq2.size() - start2);
+    int errors = get_string_mismatches(seq1, start1, seq2, start2, max_errors);
 	if (errors > max_errors) {
 		return 0;
 	}
@@ -138,26 +138,26 @@ size_t score_sequences(string const & seq1, size_t start1, string const & seq2, 
 	return len - get_string_mismatches(seq1, start1, seq2, start2, max_errors) * error_penalty; 
 }
 
-size_t get_string_matches(string const & seq1, string const & seq2, int max_errors, int max_shift) {
+int get_string_matches(string const & seq1, string const & seq2, int max_errors, int max_shift) {
 	int errors = max_errors;
 	int prev_errors = errors;
-	size_t matches = min(seq1.size(), seq2.size()) - errors;
+	int matches = min(seq1.size(), seq2.size()) - errors;
 	for (int shift = 0; shift != max_shift; ++shift) {
-		size_t best_matches = max(min(seq1.size(), seq2.size() - shift), min(seq1.size() - shift, seq2.size()));
+		int best_matches = static_cast<int>(max(min(seq1.size(), seq2.size() - shift), min(seq1.size() - shift, seq2.size())));
 		if (best_matches <= matches) {
 			break;
 		}
 		errors = min(get_string_mismatches(seq1, 0, seq2, shift, errors), errors);
 		errors = min(get_string_mismatches(seq1, 0, reverse_complementary_nn(seq2), shift, errors), errors);
 		if (errors != prev_errors) {
-			matches = max(matches, min(seq1.size(), seq2.size() - shift) - errors);
+			matches = max(matches, static_cast<int>(min(seq1.size(), seq2.size() - shift)) - errors);
 		}
 		if (shift != 0) {
 			errors = min(get_string_mismatches(seq1, shift, seq2, 0, errors), errors);
 			errors = min(get_string_mismatches(seq1, shift, reverse_complementary_nn(seq2), 0, errors), errors);
 		}
 		if (errors != prev_errors) {
-			matches = max(matches, min(seq1.size() - shift, seq2.size()) - errors);
+			matches = max(matches, static_cast<int>(min(seq1.size() - shift, seq2.size())) - errors);
 		}
 	}
 	return matches;

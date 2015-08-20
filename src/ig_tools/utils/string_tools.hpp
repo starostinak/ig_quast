@@ -50,7 +50,7 @@ string delete_spaces(string str) {
 vector<string> split(const string &s, const string &separator) {
     vector<string> ans;
     size_t sep_len = separator.length();
-    int found = s.find(separator);
+    size_t found = s.find(separator);
     int previous = 0;
     //cout << s.length() << '\n';
 

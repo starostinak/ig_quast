@@ -80,8 +80,8 @@ struct Metrics {
 	double max_perc_identity;
 
 	Metrics() :
-		original_metrics(),
 		constructed_metrics(),
+		original_metrics(),
 		avg_fillin(),
 		max_cluster_fillin(),
 		correct_singletons(),
@@ -265,7 +265,7 @@ class ClustersEvaluator {
 			if(IsClusterBigAndSingletons(orig_cluster_ind))
 				metrics_.original_metrics.num_nm_big_singletons++;
 
-			size_t orig_cluster_size = original_clusters_.ClusterSize(orig_cluster_ind);
+			// size_t orig_cluster_size = original_clusters_.ClusterSize(orig_cluster_ind);
 			double orig_cluster_fill = ComputeNotMergedFillin(orig_cluster_ind);
 
 			sum_fill += orig_cluster_fill;

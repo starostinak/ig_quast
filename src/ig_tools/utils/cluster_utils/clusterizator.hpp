@@ -140,7 +140,7 @@ class Clusterizator {
         assert(comparison_result.match);
         if(comparison_result.second_reverse)
             s2 = reverse_complementary(s2);
-        size_t overlap_size = comparison_result.s2_overlap_pos.second - comparison_result.s2_overlap_pos.first + 1;
+        // size_t overlap_size = comparison_result.s2_overlap_pos.second - comparison_result.s2_overlap_pos.first + 1;
         string superstring;
         if(comparison_result.s1_overlap_pos.first > comparison_result.s2_overlap_pos.first) {
             superstring = s1.substr(0, comparison_result.s1_overlap_pos.second + 1);

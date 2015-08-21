@@ -383,9 +383,9 @@ def RunInexactEvaluator(params, log):
     component_metrics = inexact_metrics_utils.ComponentMetrics(params.evaluator, params.size_cutoff)
     component_metrics.evaluate()
     inexact_evaluator_writing_utils.write_component_stats(
-        os.path.join(params.stats_dir, 'component_metrics.txt'), component_metrics)
+        os.path.join(params.output_dir, 'component_metrics.txt'), component_metrics)
     inexact_evaluator_writing_utils.draw_component_sizes_distr(
-        os.path.join(params.stats_dir, 'comp_cluster_sizes.png'), component_metrics)
+        os.path.join(params.output_dir, 'comp_cluster_sizes.png'), component_metrics)
 
 
 # -----------------------------------------------------------------------------

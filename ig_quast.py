@@ -69,7 +69,7 @@ class Params:
     matches_files = []
 
 class BaseOptions:
-    long_options = ("skip-drawing test help adv-analysis adv-output tau= isol-min-size= adv-min-size= Rc= Rr= out= threads-num=".split() +
+    long_options = ("skip-drawing test-original test-general test-mult-cmp help adv-analysis adv-output tau= isol-min-size= adv-min-size= Rc= Rr= out= threads-num=".split() +
                     ["c" + str(i) + "=" for i in
                         xrange(1, Params.max_repertoires_number + 1)] +
                     ["r" + str(i) + "=" for i in
@@ -86,7 +86,9 @@ def usage(log):
     log.info("  --r<#>\t\t<filename>\tRCM file with constructed repertoire number <#> (<#> = 1,2)")
 
     log.info("\nBasic options:")
-    log.info("  --test\t\t\t\truns test dataset")
+    log.info("  --test-original\t\t\t\truns test dataset")
+    log.info("  --test-general\t\t\t\truns test dataset")
+    log.info("  --test-mult-cmp\t\t\t\truns test dataset")
     log.info("  --out\t\t\t<filename>\toutput directory")
     log.info("  --help\t\t\t\tprints help")
 
@@ -113,9 +115,18 @@ def ParseCommandLine(params, log):
             params.original_clusters[1] = arg
         elif opt == '--skip-drawing':
             params.draw_hist = False
-        elif opt == '--test':
+        elif opt == '--test-original':
             constructed_clusters_raw[1] = ["ig_test_dataset/constructed.clusters.fa", "ig_test_dataset/constructed.rcm"]
             params.original_clusters = ["ig_test_dataset/ideal.clusters.fa", "ig_test_dataset/ideal.rcm"]
+            params.test_dataset = True
+        elif opt == '--test-general':
+            constructed_clusters_raw[1] = ["ig_test_dataset/constructed.clusters.fa", "ig_test_dataset/constructed.rcm"]
+            params.min_cluster_size = 10
+            params.deep_analysis = True
+            params.test_dataset = True
+        elif opt == '--test-mult-cmp':
+            constructed_clusters_raw[1] = ["ig_test_dataset/constructed.clusters.fa", "ig_test_dataset/constructed.rcm"]
+            constructed_clusters_raw[2] = ["ig_test_dataset/ideal.clusters.fa", "ig_test_dataset/ideal.rcm"]
             params.test_dataset = True
         elif opt == '--out':
             params.output_dir = arg
@@ -673,9 +684,9 @@ def RunBlast(clusters_fa, output_dir, log):
 def RunIgBlast(clusters_fa, output_dir, log):
     igblast_output = os.path.join(output_dir, "igblast.output")
     log.info("\n== IgBlast starts")
-    igblast_command_line = init.RunIgblast() + " -germline_db_V "+ init.IgblastDirectory() +"database/human_gl_V -germline_db_J "+ init.IgblastDirectory() +"database/human_gl_J -germline_db_D "+ init.IgblastDirectory() +\
+    igblast_command_line = init.RunIgblast() + " -germline_db_V "+ init.ig_blast_directory +"database/human_gl_V -germline_db_J "+ init.ig_blast_directory +"database/human_gl_J -germline_db_D "+ init.ig_blast_directory +\
 "database/human_gl_D -query "+ clusters_fa + " -show_translation -auxiliary_data auxilary_file -num_alignments 10  -outfmt \"7 qseqid sseqid pident length mismatch gapopen gaps qstart qend sstart send evalue bitscore slen\" -domain_system imgt > " + igblast_output
-    os.environ['IGDATA'] = init.IgblastDirectory()
+    os.environ['IGDATA'] = init.ig_blast_directory
     print("IgBlast command line: " + igblast_command_line)
     err_code = os.system(igblast_command_line)
     if err_code != 0:

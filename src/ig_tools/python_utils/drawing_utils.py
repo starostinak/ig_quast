@@ -104,6 +104,8 @@ def GetMaxBinsNumber(labels_count):
     return 90 / labels_count
 
 def RemoveEmptyKeysFromHistogram(keys, histogram_setting):
+    if isinstance(histogram_setting.label, str):
+        return
     label = copy.copy(histogram_setting.label)
     for i in range(len(keys) - 1, -1, -1):
         if not keys[i]:
@@ -290,13 +292,13 @@ def DrawSomaticMutations(X, Y, cdrs, settings):
     import pylab 
     cdr_color = "#EFBEBE"
     # cdr1
-    plt.gca().add_patch(Rectangle((cdrs[0], 0), cdrs[1] - cdrs[0], max_y, facecolor= cdr_color, lw = 0))
+    plt.gca().add_patch(pylab.Rectangle((cdrs[0], 0), cdrs[1] - cdrs[0], max_y, facecolor= cdr_color, lw = 0))
 
     # cdr2
-    plt.gca().add_patch(Rectangle((cdrs[2], 0), cdrs[3] - cdrs[2], max_y, facecolor= cdr_color, lw = 0))
+    plt.gca().add_patch(pylab.Rectangle((cdrs[2], 0), cdrs[3] - cdrs[2], max_y, facecolor= cdr_color, lw = 0))
 
     # cdr3
-    plt.gca().add_patch(Rectangle((cdrs[4], 0), cdrs[5] - cdrs[4], max_y, facecolor= cdr_color, lw = 0))
+    plt.gca().add_patch(pylab.Rectangle((cdrs[4], 0), cdrs[5] - cdrs[4], max_y, facecolor= cdr_color, lw = 0))
     
     DrawMultiplePlot(X, Y, settings)
 
@@ -308,11 +310,12 @@ def DrawMutationHistogram(pos, settings):
     cdr3_start = 0.8
     cdr3_end = 0.86
 
+    import pylab
     n, bins, patches = DrawHistogram(pos, settings)
     cdr_color = "#EFBEBE"
-    plt.gca().add_patch(Rectangle((cdr1_start, 0), cdr1_end - cdr1_start, MaxValue(n) + 2, facecolor= cdr_color, lw = 0))
-    plt.gca().add_patch(Rectangle((cdr2_start, 0), cdr2_end - cdr2_start, MaxValue(n) + 2, facecolor= cdr_color, lw = 0))
-    plt.gca().add_patch(Rectangle((cdr3_start, 0), cdr3_end - cdr3_start, MaxValue(n) + 2, facecolor= cdr_color, lw = 0))
+    plt.gca().add_patch(pylab.Rectangle((cdr1_start, 0), cdr1_end - cdr1_start, MaxValue(n) + 2, facecolor= cdr_color, lw = 0))
+    plt.gca().add_patch(pylab.Rectangle((cdr2_start, 0), cdr2_end - cdr2_start, MaxValue(n) + 2, facecolor= cdr_color, lw = 0))
+    plt.gca().add_patch(pylab.Rectangle((cdr3_start, 0), cdr3_end - cdr3_start, MaxValue(n) + 2, facecolor= cdr_color, lw = 0))
     DrawHistogram(pos, settings)
 
 def DrawIdentityPercentageDistribution(histogram, histname):

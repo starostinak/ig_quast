@@ -46,18 +46,11 @@ def PrintCommandLine(argv, log):
     command_line = " ".join([str(x) for x in argv] )
     log.info("\nCommand line: "+ command_line)
 
-def ReadConfig():
-    if not os.path.exists(path_to_config_template):
-        print("ERROR: config file " + path_to_config_template + " was not found")
-    f = open(path_to_config_template, "r")
-    config_params = dict()
-    for line in f.readlines():
-        splits = line.split()
-        config_params[splits[0]] = splits[1]
-    return config_params
+def RunBlast():
+    return os.path.join(home_directory, "src/tools/ncbi_blast_bin/blastn")
 
 def RunIgblast():
-    return os.path.join(ig_blast_directory, "/bin/igblastn")
+    return os.path.join(ig_blast_directory, "bin/igblastn")
 
 def BlastDB():
     return os.path.join(home_directory, "src/tools/ncbi_blast_bin/filtered_imgt_blast_db/filtered_imgt_blastdb")

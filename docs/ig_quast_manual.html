@@ -128,7 +128,7 @@ To install <code>IgQUAST</code>, type:
 To try <code>IgQUAST</code> on test data set, run:
 <pre class="code">
 <code>
-    ./ig_quast.py --test
+    ./ig_quast.py --test-general
 </code>
 </pre>
 
@@ -169,11 +169,11 @@ Command line of IgQUAST:
 <h3>3.1 Basic options</h3>
 
 <code>--c&lt;#> &lt;file_name></code></br>
-CLUSTERS.FASTA file with antibody clusters number &lt;#> (&lt;#> = 1, 2, 3, 4, 5) (required). 
+CLUSTERS.FASTA file with antibody clusters number &lt;#> (&lt;#> = 1, 2) (required). 
 For example, for the first CLUSTERS.FASTA file the option is: <code>--c1 &lt;file_name></code>. </br></br>
 
 <code>--r&lt;#> &lt;file_name></code></br>
-RCM file with antibody clusters number &lt;#> (&lt;#> = 1, 2, 3, 4, 5). 
+RCM file with antibody clusters number &lt;#> (&lt;#> = 1, 2). 
 For example, for the first RCM file the option is: <code>--r1 &lt;file_name></code>. </br></br>
 
 <code>--out &lt;output_dir></code></br>
@@ -183,14 +183,21 @@ If option <code>--out</code> is not specified, IgQUAST working directory is <cod
 <code>--help</code></br>
 Prints help.</br></br>
 
-<code>--test</code></br>
-Runs test dataset.
+<code>--test-general</code></br>
+Runs test dataset for single repertoire evaluation.</br></br>
+
 IgQUAST command line is equivalent to:
 <pre class="code">
 <code>
-	./ig_quast.py --c1 ./test_dataset/test.clusters.fa --r1 ./test_dataset/test.rcm
+	./ig_quast.py --c1 ./ig_test_dataset/constructed.clusters.fa --r1 ./ig_test_dataset/constructed.rcm
 </code>
 </pre>
+
+<code>--test-mult-cmp</code></br>
+Runs test dataset for multiple repertoires comparison.</br></br>
+
+<code>--test-original</code></br>
+Runs test dataset for quality assessment against an ideal repertoire.</br></br>
 
 <!----------------------------------------->
 <a id = "basic_output"></a>
@@ -239,7 +246,7 @@ For each input repertoire &lt;repertoire_name> IgQUAST creates subdirectory <b>&
 <!------------------------------------------------------------------>
 <a id = "single_mode"></a>
 <h2>4.0 <em>Single repertoire evaluation</em> mode</h2>
-IgQUAST takes a sinlge repertoire as an input and computes a set of basic metrics and performs advanced analysis of mutated groups of input repertoire (optionally).
+IgQUAST takes a single repertoire as an input and computes a set of basic metrics and performs advanced analysis of mutated groups of input repertoire (optionally).
 
 <!----------------------------------------->
 
@@ -251,7 +258,7 @@ Enables advanced analysis of mutated groups.
 Analysis searches similar clusters for each big cluster (by default, cluster of size >10), performs pairwise alignment and draws plot of polymorphism positions (see <a href = "#single_output"><em>Single repertoire evaluation</em> output</a>).</br></br>
 
 <code>--adv-min-size &lt;int></code></br>
-Minimal size of clusters that will be analyzed by advanced analysis of mutated groups. 
+Minimal size of clusters that will be analysed by advanced analysis of mutated groups. 
 Default value is '10'.</br>
 <b>NOTE:</b> Small value of <code>--adv-min-size</code> can significantly slow running time of IgQUAST. 
 
@@ -383,11 +390,14 @@ IgQUAST compares multiple repertoires constructed from the same sequencing libra
 <a id = "multiple_options"></a>
 <h3>5.1 <em>Multiple repertoires comparison</em> options</h3>
 
-<code>--errors &lt;int></code></br>
-Maximal allowed number of mismatches used in comparison of cluster sequences. Default value is '4'.</br></br>
+<code>--tau &lt;int></code></br>
+Parameter tau for repertoire matching. Default value is '3'.</br></br>
 
 <code>--isol-min-size &lt;int></code></br>
 Size cutoff for isolated clusters comparison and drawing graphs. Default value is '20'.</br></br>
+
+<code>--adv-output &lt;int></code></br>
+Enables output of cluster graphs.</br></br>
 
 <!----------------------------------------->
 <a id = "multiple_metrics"></a>
@@ -463,6 +473,47 @@ Size cutoff for isolated clusters comparison and drawing graphs. Default value i
   </tr>
 </table>
 
+<h4>General and individual metrics for components</h4>
+<table width="100%">
+  <col width="30%">
+  <col width="70%">
+  <tr>
+    <td><b>Metric name</b></td>
+    <td><b>Description</b></td> 
+  </tr>
+  
+  <tr>
+    <td><em>Min/Avg/Max number of clusters in component</em></td>
+    <td>Minimal/average/maximal number of clusters in component of graph showing relations between clusters in compared repertoires (vertexes - clusters, edges - shared reads or similar sequences)</td>
+  </tr>
+  
+  <tr>
+    <td><em>Min/Avg/Max percent of identity in component</em></td>
+    <td>Percentage of identical positions in multiple alignment of sequences in component</td>
+  </tr>
+  
+  <tr>
+    <td><em>Min/Avg/Max maximal number of mismatches between two sequences in component</em></td>
+    <td>Minimal/average/maximal maximal number of mismatch positions in multiple alignment of sequences in component</td>
+  </tr>
+  
+  <tr>
+    <td><em>Min/Avg/Max maximal number of gaps between two sequences in component</em></td>
+    <td>Minimal/average/maximal maximal number of gapped positions in multiple alignment of sequences in component</td>
+  </tr>
+  
+  <tr>
+    <td><em>Min/Avg/Max minimal number of mismatches between two sequences in component</em></td>
+    <td>Minimal/average/maximal minimal number of mismatch positions in multiple alignment of sequences in component</td>
+  </tr>
+  
+  <tr>
+    <td><em>Min/Avg/Max minimal number of gaps between two sequences in component</em></td>
+    <td>Minimal/average/maximal minimal number of gapped positions in multiple alignment of sequences in component</td>
+  </tr>
+</table>
+In case of general metrics, full component is taken into account. In case of individual - only clusters from the same repertoire.
+
 <!----------------------------------------->
 <a id = "multiple_output"></a>
 <h3>5.3 <em>Multiple repertoires comparison</em> output</h3>
@@ -518,6 +569,7 @@ Size cutoff for isolated clusters comparison and drawing graphs. Default value i
 <ul>
     <ul>
         <li><b>metrics.csv</b> computed metrics in CSV (comma separated) format.</li>
+        <li><b>component_metrics.txt</b> computed metrics for components in TXT format.</li>
     </ul></br>
 
     <li><b>Statistics</b>:</li>

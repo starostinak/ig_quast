@@ -1,6 +1,3 @@
-#define SEQAN_HAS_ZLIB 1 // TODO Set it using cmake
-#define SEQAN_HAS_BZLIB 1
-
 #include <chrono>
 
 #include <future>
@@ -25,6 +22,7 @@ using seqan::CharString;
 
 #include "ig_matcher.hpp"
 #include "banded_half_smith_waterman.hpp"
+#include "fast_ig_tools.hpp"
 
 
 class BestScoreIndices {
@@ -92,7 +90,7 @@ void bestScorePairing(const std::vector<T> &input_reads1,
   std::vector<BestScoreIndices> g1(input_reads1.size());
   std::vector<BestScoreIndices> g2(input_reads2.size());
 
-  SEQAN_OMP_PRAGMA(parallel for)  // becomes: #pragma omp parallel for
+  SEQAN_OMP_PRAGMA(parallel for schedule(dynamic, 8))
   for (size_t j = 0; j < input_reads1.size(); ++j) {
     auto cand = find_candidates(input_reads1[j], kmer2reads2, input_reads2.size(), tau, K, strategy);
 
@@ -103,7 +101,7 @@ void bestScorePairing(const std::vector<T> &input_reads1,
     }
   }
 
-  SEQAN_OMP_PRAGMA(parallel for)  // becomes: #pragma omp parallel for
+  SEQAN_OMP_PRAGMA(parallel for schedule(dynamic, 8))
   for (size_t j = 0; j < input_reads2.size(); ++j) {
     auto cand = find_candidates(input_reads2[j], kmer2reads1, input_reads1.size(), tau, K, strategy);
 
@@ -114,12 +112,12 @@ void bestScorePairing(const std::vector<T> &input_reads1,
     }
   }
 
-  SEQAN_OMP_PRAGMA(parallel for)  // becomes: #pragma omp parallel for
+  SEQAN_OMP_PRAGMA(parallel for schedule(guided, 8))
   for (size_t i = 0; i < g1.size(); ++i) {
     remove_duplicates(g1[i].indices);
   }
 
-  SEQAN_OMP_PRAGMA(parallel for)  // becomes: #pragma omp parallel for
+  SEQAN_OMP_PRAGMA(parallel for schedule(guided, 8))
   for (size_t i = 0; i < g2.size(); ++i) {
     remove_duplicates(g2[i].indices);
   }
@@ -131,6 +129,8 @@ void bestScorePairing(const std::vector<T> &input_reads1,
 
 int main(int argc, char **argv) {
   auto start_time = std::chrono::high_resolution_clock::now();
+
+  cout << "Command line: " << join_cmd_line(argc, argv) << std::endl;
 
   int K = 36; // anchor length
   int tau = 3;

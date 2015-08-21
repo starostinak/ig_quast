@@ -1,6 +1,3 @@
-#define SEQAN_HAS_ZLIB 1 // TODO Set it using cmake
-#define SEQAN_HAS_BZLIB 1
-
 #include <seqan/find.h>
 #include <seqan/seq_io.h>
 #include <seqan/stream.h>
@@ -15,6 +12,7 @@
 #include <fstream>
 #include <boost/format.hpp>
 #include <mutex>
+#include <chrono>
 
 
 using namespace seqan;
@@ -30,6 +28,9 @@ using bformat = boost::format;
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
+
+
+#include "fast_ig_tools.hpp"
 
 
 // input vector(pair(needle_pos, read_pos))
@@ -139,18 +140,6 @@ public:
       }
     }
 
-    // Reverse for LIS search
-    // Very important step!
-    // We don't use LIS more...
-    // for (auto &p : kmer2needle) {
-    //   std::reverse(p.second.begin(), p.second.end());
-    // }
-
-    most_pop_kmer_uses = 0;
-    for (const auto &e : kmer2needle) {
-      most_pop_kmer_uses = std::max<int>(most_pop_kmer_uses, e.second.size());
-    }
-
     StringSet<Dna5String> kmers;
     for (const auto &e : kmer2needle) {
       appendValue(kmers, e.first);
@@ -158,9 +147,9 @@ public:
 
     // Define the Aho-Corasick pattern over the queries with the preprocessing
     // data structure.
-    // Better to use make_unique
-    pattern = std::move(std::unique_ptr<PatternIndex>(new PatternIndex(kmers)));
-    pmtx = std::move(std::unique_ptr<std::mutex>(new std::mutex));
+    // Better to use make_unique UPD Better to read mans before coding.
+    pattern.reset(new PatternIndex(kmers));
+    pmtx.reset(new std::mutex);
   }
 
   std::unordered_map<size_t, std::vector<std::pair<int, int>> > Needle2matches(Dna5String read) {
@@ -347,6 +336,10 @@ private:
 
 
 int main(int argc, char **argv) {
+  auto start_time = std::chrono::high_resolution_clock::now();
+
+  cout << "Command line: " << join_cmd_line(argc, argv) << std::endl;
+
   int K = 7; // anchor length
   int word_size_j = 5;
   int left_uncoverage_limit = 16;
@@ -679,5 +672,9 @@ int main(int argc, char **argv) {
     t.join();
   }
 
+  auto finish_time = std::chrono::high_resolution_clock::now();
+
+  auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(finish_time - start_time).count();
+  cout << bformat("Elapsed time: %0.3fs") % (double(elapsed_time) / 1000.) << std::endl;
   return 0;
 }

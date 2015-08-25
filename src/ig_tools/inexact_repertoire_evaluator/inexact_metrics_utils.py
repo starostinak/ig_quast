@@ -201,46 +201,40 @@ class Metrics:
     def get_trivial_isolated_clusters(self, rep_id):
         return self.isolated_cluster_sizes[rep_id].count(1)
 
-    '''
-    def calculate_component_stats(self, log):
-        components = dict() # {component_id -> [[sizes of clusters for each repertoire]]}
-        for rep_id, component in enumerate(self.evaluator.components):
-            rep = self.evaluator.repertoires[rep_id]
-            for cluster_id, component_id in component.items():
-                if component_id not in components:
-                    components[component_id] = [[] for i in range(len(self.evaluator.repertoires))]
-                components[component_id][rep_id].append(rep.clusters[cluster_id].size)
-        log.info('Number of components ' + str(len(components)))
-        num_of_clusters_in_comp = [sum(len(rep_clusters) for rep_clusters in comp_clusters) for comp_clusters in components.values()]
-        points = []
-        for r0, r1 in components.values():
-            if r0 and r1:
-                points.append([sum(r0), sum(r1)])
-
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        import pylab
-        plt.plot(*zip(*points), marker='*', label=[self.evaluator.repertoires[0].name, self.evaluator.repertoires[1].name], ls='')
-        plt.xlabel(self.evaluator.repertoires[0].name)
-        plt.ylabel(self.evaluator.repertoires[1].name)
-        pylab.legend()
-        plt.savefig('sum_of_sizes.png')
-
-        log.info('Min number of clusters in component ' + str(min(num_of_clusters_in_comp)))
-        log.info('Avg number of clusters in component ' + str(sum(num_of_clusters_in_comp) / float(len(num_of_clusters_in_comp))))
-        log.info('Max number of clusters in component ' + str(max(num_of_clusters_in_comp)))
-        for rep_id in range(len(self.evaluator.repertoires)):
-            log.info('For ' + self.evaluator.repertoires[rep_id].name + ':')
-            log.info('Min number of clusters in component ' + str(min(len(a[rep_id]) for a in components.values() if a[rep_id])))
-            log.info('Avg number of clusters in component ' + str(sum([len(a[rep_id]) for a in components.values() if a[rep_id]]) / float(len([c for c, val in components.items() if val[rep_id]]))))
-            log.info('Max number of clusters in component ' + str(max(len(a[rep_id]) for a in components.values() if a[rep_id])))
-            log.info('')
-    ''' 
-
     def evaluate(self):
         self.count_isolated_clusters()
         self.count_trusted_untrusted_groups()
+    
+    def get_barcode_metrics(self, output_dir):
+        import os.path
+        barcode_rep = self.evaluator.repertoires[0]
+        distances = []
+        barcodes_number = len(barcode_rep.clusters)
+        for cluster_id in barcode_rep.clusters:
+            if cluster_id in self.evaluator.neighbour_clusters[0][1]:
+                distances.append(self.evaluator.neighbour_clusters[0][1][cluster_id][1])
+        handler = open(os.path.join(output_dir, 'barcode_metrics.txt'), 'w')
+        handler.write('Total number of barcodes is ' + str(barcodes_number) + '\n')
+        for dist in range(max(distances) + 1):
+            if dist not in distances:
+                continue
+            cnt = distances.count(dist)
+            handler.write('Number of barcodes reconstructed with distance ' + str(dist) + 
+                          ' is ' + str(cnt) + '(' + 
+                          str(round(float(cnt) / barcodes_number * 100, 2)) + '%)\n')
+        handler.write('Min size of isolated cluster in barcode is ' + \
+            str(self.get_min_isolated_cluster_size(0)) + '\n') 
+        handler.write('Avg size of isolated cluster in barcode is ' + \
+            str(self.get_avg_isolated_cluster_size(0)) + '\n') 
+        handler.write('Max size of isolated cluster in barcode is ' + \
+            str(self.get_max_isolated_cluster_size(0)) + '\n') 
+        handler.write('Min size of isolated cluster in data is ' + \
+            str(self.get_min_isolated_cluster_size(1)) + '\n') 
+        handler.write('Avg size of isolated cluster in data is ' + \
+            str(self.get_avg_isolated_cluster_size(1)) + '\n') 
+        handler.write('Max size of isolated cluster in data is ' + \
+            str(self.get_max_isolated_cluster_size(1)) + '\n') 
+        handler.close()
 
 class ClusterSizeId:
     def __init__(self, cluster_id, size):

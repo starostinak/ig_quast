@@ -20,8 +20,10 @@ class RepertoireEvaluator:
     def build_neighbour_connections(self, rep_id1, rep_id2, neighbours):
         for cluster_id1, (cluster2_ids, score) in neighbours.items():
             for cluster_id2 in cluster2_ids:
+                '''
                 if score == 0:
                     continue
+                '''
                 if cluster_id1 in self.connections[rep_id1][rep_id2] and \
                         cluster_id2 in self.connections[rep_id1][rep_id2][cluster_id1]:
                     self.connections[rep_id1][rep_id2][cluster_id1][cluster_id2].type = ConnectionType.close_each

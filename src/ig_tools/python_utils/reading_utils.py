@@ -4,14 +4,22 @@ from collections import defaultdict
 import sys
 import os.path
 
-def read_repertoires(repertoires_list):
+def read_repertoire(fasta, rcm, read_ids):
+    clusters = read_fasta(fasta)
+    cluster_reads, read_clusters = None, None
+    if rcm:
+        cluster_reads, read_clusters = read_rcm(rcm, read_ids)
+    return clusters, cluster_reads, read_clusters
+
+def read_repertoires(repertoires_list, barcode_files):
     repertoires = []
     read_ids = {}
+    if barcode_files[0]:
+        clusters, cluster_reads, read_clusters = read_repertoire(barcode_files[0], barcode_files[1], read_ids)
+        repertoires.append(Repertoire(barcode_files[0], barcode_files[1], clusters, 
+                                       cluster_reads, read_clusters, 'assembled_barcodes'))
     for i, (fasta, rcm) in enumerate(repertoires_list):
-        clusters = read_fasta(fasta)
-        cluster_reads, read_clusters = None, None
-        if rcm:
-            cluster_reads, read_clusters = read_rcm(rcm, read_ids)
+        clusters, cluster_reads, read_clusters = read_repertoire(fasta, rcm, read_ids)
         name = os.path.basename(fasta).split('.', 1)[0] + \
             ('_' + str(i + 1) if len(repertoires_list) > 1 else '')
         repertoires.append(Repertoire(fasta, rcm, clusters, cluster_reads, read_clusters, name))
@@ -90,6 +98,6 @@ def read_neighbour_clusters(matches_filenames, repertoires, cluster_num_to_ids):
                 if cluster1 not in cluster_pairs[rep1][rep2]:
                     cluster_pairs[rep1][rep2][cluster1] = [set(), 0]
                 cluster_pairs[rep1][rep2][cluster1][0].add(cluster2)
-                cluster_pairs[rep1][rep2][cluster1][1] = score
+                cluster_pairs[rep1][rep2][cluster1][1] = -int(score)
         
     return cluster_pairs

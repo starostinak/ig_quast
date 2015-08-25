@@ -31,6 +31,7 @@ class Params:
 
     constructed_clusters = None
     original_clusters = ["", ""]
+    assembled_barcodes = ["", ""]
 
     draw_hist = True
     output_basename = ""
@@ -67,9 +68,10 @@ class Params:
     # temporary 
     # neighbour_clusters_file = ""
     matches_files = []
+    rerun = False
 
 class BaseOptions:
-    long_options = ("skip-drawing test-original test-general test-mult-cmp help adv-analysis adv-output tau= isol-min-size= adv-min-size= Rc= Rr= out= threads-num=".split() +
+    long_options = ("skip-drawing test-original test-general test-mult-cmp help adv-analysis adv-output tau= isol-min-size= adv-min-size= Rc= Rr= Bc= Br= out= threads-num= rerun".split() +
                     ["c" + str(i) + "=" for i in
                         xrange(1, Params.max_repertoires_number + 1)] +
                     ["r" + str(i) + "=" for i in
@@ -82,6 +84,8 @@ def usage(log):
     log.info("\nRepertoire options:")
     log.info("  --Rc\t\t\t<filename>\tCLUSTERS file with original (ideal) repertoire")
     log.info("  --Rr\t\t\t<filename>\tRCM file with original (ideal) repertoire")
+    log.info("  --Bc\t\t\t<filename>\tCLUSTERS file with repertoire corresponding to assembled barcodes")
+    log.info("  --Br\t\t\t<filename>\tRCM file with for repertoire corresponding to assembled barcodes")
     log.info("  --c<#>\t\t<filename>\tCLUSTERS file with constructed repertoire number <#> (<#> = 1,2)")
     log.info("  --r<#>\t\t<filename>\tRCM file with constructed repertoire number <#> (<#> = 1,2)")
 
@@ -113,6 +117,10 @@ def ParseCommandLine(params, log):
             params.original_clusters[0] = arg
         elif opt == '--Rr':
             params.original_clusters[1] = arg
+        elif opt == '--Bc':
+            params.assembled_barcodes[0] = arg
+        elif opt == '--Br':
+            params.assembled_barcodes[1] = arg
         elif opt == '--skip-drawing':
             params.draw_hist = False
         elif opt == '--test-original':
@@ -153,6 +161,8 @@ def ParseCommandLine(params, log):
             params.min_cluster_size = int(arg)
         elif opt == '--adv-output':
             params.draw_cluster_graphs = True
+        elif opt == '--rerun':
+            params.rerun = True
             
     if len(options) == 0 and len(tmp) == 1 :
         usage(log)
@@ -308,18 +318,30 @@ def RunIgMatcher(log, params):
     aln_filenames = []
     cluster_num_to_ids = []
     for rep in params.evaluator.repertoires:
-        aln_filenames.append(os.path.join(params.stats_dir, rep.name + '.fa'))
+        aln_filenames.append(os.path.join(params.stats_dir, rep.name))
         command_line = init.PathToBins.run_ig_kplus_vj_finder_tool + \
                 ' -i ' + rep.clusters_filename + \
-                ' -o ' + aln_filenames[-1] + \
+                ' -o ' + aln_filenames[-1] + '.vj.fa' + \
                 ' -b ' + os.path.join(params.stats_dir, rep.name + '.bad.fa') + ' -S'
-        exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
-        if exit_code != 0:
-            AbnormalFinishMsg(log, 'ig_kplus_vj_finder')
+        if not params.rerun:
+            exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
+            if exit_code != 0:
+                AbnormalFinishMsg(log, 'ig_kplus_vj_finder')
+                sys.exit(-1)
+        if not os.path.exists(aln_filenames[-1] + '.vj.fa'):
+            log.info('ERROR: cannot find alignment file ' + aln_filenames[-1] + '.vj.fa')
+        command_line = init.PathToBins.run_ig_trie_compressor_tool + \
+                ' -i ' + aln_filenames[-1] + '.vj.fa' + \
+                ' -o ' + aln_filenames[-1] + '.fa'
+        if not params.rerun:
+            exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
+            if exit_code != 0:
+                AbnormalFinishMsg(log, 'ig_trie_compressor')
+                sys.exit(-1)
+        if not os.path.exists(aln_filenames[-1] + '.fa'):
+            log.info('ERROR: cannot find alignment file ' + aln_filenames[-1] + '.fa')
             sys.exit(-1)
-        if not os.path.exists(aln_filenames[-1]):
-            log.info('ERROR: cannot find alignment file ' + aln_filenames[-1])
-            sys.exit(-1)
+        aln_filenames[-1] += '.fa'
         cluster_num_to_ids.append(reading_utils.read_cluster_numbers_to_ids(aln_filenames[-1]))
 
     command_line = init.PathToBins.run_ig_matcher_tool + \
@@ -329,10 +351,11 @@ def RunIgMatcher(log, params):
             ' -o ' + matches_files[0] + \
             ' -O ' + matches_files[1]
 
-    exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
-    if exit_code != 0:
-        AbnormalFinishMsg(log, "ig_matcher")
-        sys.exit(-1)
+    if not params.rerun:
+        exit_code = os.system(command_line + ' 2>&1 | tee -a ' + params.log)
+        if exit_code != 0:
+            AbnormalFinishMsg(log, "ig_matcher")
+            sys.exit(-1)
     if any(not os.path.exists(filename) for filename in matches_files):
         log.info('ERROR: cannot find neighbour clusters file') 
         sys.exit(-1)
@@ -380,12 +403,16 @@ def RunInexactEvaluator(params, log):
         main_metrics.big_isolated_clusters, params.evaluator)
     log.info("* Big isolated clusters were written to " + suspected_groups_file)
 
+    main_metrics.get_barcode_metrics(params.stats_dir)
+
+    '''
     component_metrics = inexact_metrics_utils.ComponentMetrics(params.evaluator, params.size_cutoff)
     component_metrics.evaluate()
     inexact_evaluator_writing_utils.write_component_stats(
         os.path.join(params.output_dir, 'component_metrics.txt'), component_metrics)
     inexact_evaluator_writing_utils.draw_component_sizes_distr(
         os.path.join(params.output_dir, 'comp_cluster_sizes.png'), component_metrics)
+    '''
 
 
 # -----------------------------------------------------------------------------
@@ -397,7 +424,7 @@ def ConvertRcmToClusterSizes(rcm):
     return sizes
 
 def ReadRepertoires(params, log):
-    repertoires, read_names = reading_utils.read_repertoires(params.constructed_clusters)
+    repertoires, read_names = reading_utils.read_repertoires(params.constructed_clusters, params.assembled_barcodes)
     params.evaluator = RepertoireEvaluator(repertoires)
     log.info('\n==== Repertoires:')
     for rep in params.evaluator.repertoires:
@@ -611,7 +638,8 @@ def DrawHistograms(params, log):
     DrawClusterSizesHist(params, log)
     DrawClusterLengthHist(params, log)
 
-    if params.original_clusters == ["", ""] and len(params.constructed_clusters) >= 2:
+    if params.original_clusters == ["", ""] and \
+            (len(params.constructed_clusters) >= 2 or params.assembled_barcodes[0]):
         DrawClusterGroupsDistribution(params, log)
 
 # -------------------------------------------------------------------
@@ -623,6 +651,7 @@ def CheckParams(params, log):
                 not constructed_clusters_rcm:
             log.info("ERROR: RCM file for CLUSTERS " + constructed_clusters_fa + " must be given")
             sys.exit(1)
+        
         elif params.original_clusters == ["", ""] and len(params.constructed_clusters) != 1 and \
                 not constructed_clusters_fa:
             log.info("ERROR: CLUSTERS file for RCM " + constructed_clusters_rcm + " must be given")
@@ -737,7 +766,7 @@ def RunIgQUAST(params, log):
         params.evaluator.original_repertoire = reading_utils.read_repertoires(
             [params.original_clusters])[0][0]
         RunExactEvaluator(params, log)
-    elif len(params.constructed_clusters) == 1:
+    elif len(params.constructed_clusters) == 1 and not params.assembled_barcodes[0]:
         RunGeneralEvaluator(params, log)
     else:
         RunInexactEvaluator(params, log)

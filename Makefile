@@ -10,7 +10,7 @@ CXXLIBS+=-fopenmp
 # CXX=clang++-3.6
 CXX=g++
 
-all: repertoire_evaluator ig_matcher ig_kplus_vj_finder
+all: repertoire_evaluator ig_matcher ig_kplus_vj_finder ig_trie_compressor
 
 repertoire_evaluator: src/ig_tools/exact_repertoire_evaluator/main_evaluate_repertoire.cpp
 	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/exact_repertoire_evaluator/main_evaluate_repertoire.cpp ${CXXLIBS} -o bin/repertoire_evaluator
@@ -20,6 +20,9 @@ ig_matcher: src/ig_tools/ig_matcher/ig_matcher.cpp src/ig_tools/ig_matcher/ig_ma
 
 ig_kplus_vj_finder: src/ig_tools/ig_matcher/ig_kplus_vj_finder.cpp
 	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/ig_matcher/ig_kplus_vj_finder.cpp ${CXXLIBS} -o bin/ig_kplus_vj_finder
+
+ig_trie_compressor: src/ig_tools/ig_matcher/ig_trie_compressor.cpp src/ig_tools/ig_matcher/ig_trie_compressor.hpp
+	${CXX} ${CXXFLAGS} ${INCLUDES} src/ig_tools/ig_matcher/ig_trie_compressor.cpp ${CXXLIBS} -o bin/ig_trie_compressor
 
 rep_comp:
 	g++ -std=c++11 -g -O0 -DEBUG -Isrc/include -Iext/include/seqan-library-2.0.0/include src/ig_tools/repertoire_comparer/main.cpp src/mph_index/MurmurHash3.cpp -o bin/repertoire_comparer -lboost_thread -lboost_system

@@ -36,11 +36,13 @@ class PathToBins:
     repertoire_comparer_tool = os.path.join(ig_bin_directory, "repertoire_comparer")
     ig_matcher_tool = os.path.join(ig_bin_directory, "ig_matcher")
     ig_kplus_vj_finder_tool = os.path.join(ig_bin_directory, "ig_matcher")
+    ig_trie_compressor_tool = os.path.join(ig_bin_directory, "ig_trie_compressor")
 
     run_repertoire_evaluator_tool = ig_bin_directory + "./repertoire_evaluator"
     run_repertoire_comparer_tool = ig_bin_directory + "./repertoire_comparer"
     run_ig_matcher_tool = ig_bin_directory + "./ig_matcher"
     run_ig_kplus_vj_finder_tool = ig_bin_directory + "./ig_kplus_vj_finder"
+    run_ig_trie_compressor_tool = ig_bin_directory + "./ig_trie_compressor"
 
 def PrintCommandLine(argv, log):
     command_line = " ".join([str(x) for x in argv] )

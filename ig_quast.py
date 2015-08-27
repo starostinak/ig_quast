@@ -85,7 +85,7 @@ def usage(log):
     log.info("  --Rc\t\t\t<filename>\tCLUSTERS file with original (ideal) repertoire")
     log.info("  --Rr\t\t\t<filename>\tRCM file with original (ideal) repertoire")
     log.info("  --Bc\t\t\t<filename>\tCLUSTERS file with repertoire corresponding to assembled barcodes")
-    log.info("  --Br\t\t\t<filename>\tRCM file with for repertoire corresponding to assembled barcodes")
+    log.info("  --Br\t\t\t<filename>\tRCM file with repertoire corresponding to assembled barcodes")
     log.info("  --c<#>\t\t<filename>\tCLUSTERS file with constructed repertoire number <#> (<#> = 1,2)")
     log.info("  --r<#>\t\t<filename>\tRCM file with constructed repertoire number <#> (<#> = 1,2)")
 
@@ -405,15 +405,24 @@ def RunInexactEvaluator(params, log):
 
     main_metrics.get_barcode_metrics(params.stats_dir)
 
-    '''
     component_metrics = inexact_metrics_utils.ComponentMetrics(params.evaluator, params.size_cutoff)
     component_metrics.evaluate()
     inexact_evaluator_writing_utils.write_component_stats(
         os.path.join(params.output_dir, 'component_metrics.txt'), component_metrics)
     inexact_evaluator_writing_utils.draw_component_sizes_distr(
         os.path.join(params.output_dir, 'comp_cluster_sizes.png'), component_metrics)
-    '''
 
+def RunBarcodedDataEvaluator(params, log):
+    neighbour_clusters = RunIgMatcher(log, params)
+    log.info(".. Analizing neighbour clusters")
+    params.evaluator.add_neighbour_clusters(neighbour_clusters)
+    log.info(".. Calculating metrics")
+    barcode_metrics = inexact_metrics_utils.BarcodeMetrics(params.evaluator, params.size_cutoff, params.tau)
+    barcode_metrics.evaluate()
+    barcode_metrics_file = os.path.join(params.output_dir, 'barcode_metrics.txt')
+    inexact_evaluator_writing_utils.write_barcode_stats(
+        barcode_metrics_file, barcode_metrics)
+    log.info("* Metrics for barcoded data were written to " + barcode_metrics_file)
 
 # -----------------------------------------------------------------------------
 
@@ -768,8 +777,10 @@ def RunIgQUAST(params, log):
         RunExactEvaluator(params, log)
     elif len(params.constructed_clusters) == 1 and not params.assembled_barcodes[0]:
         RunGeneralEvaluator(params, log)
-    else:
+    elif not params.assembled_barcodes[0]:
         RunInexactEvaluator(params, log)
+    else:
+        RunBarcodedDataEvaluator(params, log)
 
     # print histograms
     DrawHistograms(params, log)
@@ -783,7 +794,8 @@ def RunIgQUAST(params, log):
     '''
 
     log.info("\n======== IgQUAST ends")
-    PrintMainOutput(params, log)
+    if params.file_metrics:
+        PrintMainOutput(params, log)
     log.info("\nThank you for using IgQUAST!")
 
 def main():

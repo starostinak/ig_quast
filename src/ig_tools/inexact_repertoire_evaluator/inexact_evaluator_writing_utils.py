@@ -355,3 +355,26 @@ def draw_component_sizes_distr(filename, comp_metrics):
     plt.savefig(filename)
     plt.gcf().clear()
 
+def write_barcode_stats(filename, barcode_metrics):
+    handler = open(filename, 'w')
+    handler.write('Total number of barcodes is ' + str(barcode_metrics.barcodes_number) + '\n')
+    for dist, count in barcode_metrics.distances_dict.items():
+        handler.write('Number of barcodes reconstructed with distance ' + str(dist) + 
+                      ' is ' + str(count) + '(' + 
+                      str(round(float(count) / barcode_metrics.barcodes_number * 100, 2)) + '%)\n')
+    handler.write('Min size of isolated cluster in barcode is ' + \
+        str(barcode_metrics.get_min_isolated_cluster_size(0)) + '\n') 
+    handler.write('Avg size of isolated cluster in barcode is ' + \
+        str(barcode_metrics.get_avg_isolated_cluster_size(0)) + '\n') 
+    handler.write('Max size of isolated cluster in barcode is ' + \
+        str(barcode_metrics.get_max_isolated_cluster_size(0)) + '\n') 
+    handler.write('Min size of isolated cluster in data is ' + \
+        str(barcode_metrics.get_min_isolated_cluster_size(1)) + '\n') 
+    handler.write('Avg size of isolated cluster in data is ' + \
+        str(barcode_metrics.get_avg_isolated_cluster_size(1)) + '\n') 
+    handler.write('Max size of isolated cluster in data is ' + \
+        str(barcode_metrics.get_max_isolated_cluster_size(1)) + '\n') 
+    if barcode_metrics.has_reads:
+        handler.write('Covered barcodes number is ' + str(barcode_metrics.covered_barcodes) + '\n')
+    handler.close()
+

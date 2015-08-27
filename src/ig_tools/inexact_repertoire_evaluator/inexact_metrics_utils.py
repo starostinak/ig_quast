@@ -33,9 +33,10 @@ class Metrics:
 
         self.suspected_groups = []
         self.has_reads = True
-        for rep_id in self.rep_ids:
-            if not self.evaluator.repertoires[rep_id].read_clusters:
-                self.has_reads = False
+        if rep_ids:
+            for rep_id in self.rep_ids:
+                if not self.evaluator.repertoires[rep_id].read_clusters:
+                    self.has_reads = False
 
     # -------------------------------------------------------------------------
     # count isolated clusters
@@ -204,37 +205,50 @@ class Metrics:
     def evaluate(self):
         self.count_isolated_clusters()
         self.count_trusted_untrusted_groups()
-    
-    def get_barcode_metrics(self, output_dir):
-        import os.path
-        barcode_rep = self.evaluator.repertoires[0]
+
+class BarcodeMetrics(Metrics):
+    def __init__(self, evaluator, size_cutoff, max_errors, rep_ids = None):
+        Metrics.__init__(self, evaluator, size_cutoff, max_errors)
+        self.barcode_rep = self.evaluator.repertoires[0]
+        self.data_rep = self.evaluator.repertoires[1]
+        self.distances_dict = {} # distance -> count
+        self.barcodes_number = len(self.evaluator.repertoires[0].clusters)
+        self.covered_barcodes = 0
+        self.erroneous_clusters = 0
+        self.has_reads = bool(self.barcode_rep.read_clusters and self.data_rep.read_clusters)
+
+    def calculate_distances(self):
         distances = []
-        barcodes_number = len(barcode_rep.clusters)
-        for cluster_id in barcode_rep.clusters:
+        for cluster_id in self.barcode_rep.clusters:
             if cluster_id in self.evaluator.neighbour_clusters[0][1]:
                 distances.append(self.evaluator.neighbour_clusters[0][1][cluster_id][1])
-        handler = open(os.path.join(output_dir, 'barcode_metrics.txt'), 'w')
-        handler.write('Total number of barcodes is ' + str(barcodes_number) + '\n')
         for dist in range(max(distances) + 1):
-            if dist not in distances:
-                continue
             cnt = distances.count(dist)
-            handler.write('Number of barcodes reconstructed with distance ' + str(dist) + 
-                          ' is ' + str(cnt) + '(' + 
-                          str(round(float(cnt) / barcodes_number * 100, 2)) + '%)\n')
-        handler.write('Min size of isolated cluster in barcode is ' + \
-            str(self.get_min_isolated_cluster_size(0)) + '\n') 
-        handler.write('Avg size of isolated cluster in barcode is ' + \
-            str(self.get_avg_isolated_cluster_size(0)) + '\n') 
-        handler.write('Max size of isolated cluster in barcode is ' + \
-            str(self.get_max_isolated_cluster_size(0)) + '\n') 
-        handler.write('Min size of isolated cluster in data is ' + \
-            str(self.get_min_isolated_cluster_size(1)) + '\n') 
-        handler.write('Avg size of isolated cluster in data is ' + \
-            str(self.get_avg_isolated_cluster_size(1)) + '\n') 
-        handler.write('Max size of isolated cluster in data is ' + \
-            str(self.get_max_isolated_cluster_size(1)) + '\n') 
-        handler.close()
+            if cnt:
+                self.distances_dict[dist] = cnt
+
+    def calculate_covered_barcodes_number(self):
+        if not self.has_reads:
+            return
+        for cluster_id, reads in self.barcode_rep.cluster_reads.items():
+            data_corr_clusters = dict() # cluster_id -> number_of_shared_reads
+            for read_id in reads:
+                if read_id not in data_rep.read_clusters:
+                    continue
+                corr_data_cluster_id = data_rep.read_clusters[read_id]
+                if corr_data_cluster_id not in data_corr_clusters:
+                    data_corr_clusters[corr_data_cluster_id] = 0
+                data_corr_clusters[corr_data_cluster_id] += 1
+            if not data_corr_clusters:
+                continue
+            corr_data_cluster_id, corr_cluster_shared_reads_num = \
+                max(data_corr_clusters.items(), key = lambda a: a[1])
+            if corr_cluster_shared >= 0.9 * len(reads):
+                self.covered_barcodes += 1
+
+    def evaluate(self):
+        self.calculate_distances()
+        self.calculate_covered_barcodes_number()
 
 class ClusterSizeId:
     def __init__(self, cluster_id, size):
